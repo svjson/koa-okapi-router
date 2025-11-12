@@ -1,6 +1,8 @@
 export interface ZodTypeAny {
   nullable: Function
   optional: Function
+  isOptional?: Function
+  _def: any
 }
 
 /**

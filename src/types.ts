@@ -148,11 +148,11 @@ export interface RouteSchema {
   /**
    * Zod schemas for validating route parameters
    */
-  params?: AnyZodSchema
+  params?: Record<string, AnyZodSchema>
   /**
    * Zod schemas for validating query string parameters
    */
-  query?: AnyZodSchema
+  query?: Record<string, AnyZodSchema>
   /**
    * Zod schemas for validating query strings
    */

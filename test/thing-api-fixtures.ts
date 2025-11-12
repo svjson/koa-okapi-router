@@ -23,7 +23,7 @@ export const routeSchemas = (schemas: ModelSchemas) => {
       description: 'Returns the THING',
       tags: ['Thing API'],
       query: {
-        type: z.string(),
+        type: z.string().optional(),
       },
       response: {
         200: ThingSearchResponseSchema,
@@ -62,6 +62,23 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
       summary: 'The thing',
       description: 'Returns the THING',
       tags: ['Thing API'],
+      parameters: [
+        {
+          in: 'query',
+          name: 'type',
+          required: false,
+          schema: {
+            anyOf: [
+              {
+                not: {},
+              },
+              {
+                type: 'string',
+              },
+            ],
+          },
+        },
+      ],
       responses: {
         '200': {
           description: 'Response',
@@ -160,6 +177,17 @@ export const openapiSchemasZodV4 = {
       summary: 'The thing',
       description: 'Returns the THING',
       tags: ['Thing API'],
+      parameters: [
+        {
+          in: 'query',
+          name: 'type',
+          required: false,
+          schema: {
+            $schema: 'https://json-schema.org/draft/2020-12/schema',
+            type: 'string',
+          },
+        },
+      ],
       responses: {
         '200': {
           description: 'Response',

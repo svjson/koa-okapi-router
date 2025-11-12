@@ -1,6 +1,6 @@
 {
   "name": "koa-okapi-router",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "license": "ISC",
   "author": "Sven Johansson <sven.johansson@iteam.se>",
   "description": "Koa Router-wrapper adding validation and openapi generation.",

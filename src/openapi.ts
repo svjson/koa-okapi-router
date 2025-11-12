@@ -1,8 +1,38 @@
 import { OkapiRouterOptions, RouteSchema } from './types'
 import { makeZodAdapter } from './zod-adapter'
-import type { ZodAdapter } from './zod-adapter'
+import type { ZodAdapter, ZodTypeAny } from './zod-adapter'
 
-import type { OpenAPIObject, PathItemObject } from 'openapi3-ts/oas31'
+import type {
+  OpenAPIObject,
+  ParameterLocation,
+  ParameterObject,
+  PathItemObject,
+  ReferenceObject,
+} from 'openapi3-ts/oas31'
+
+const isOptional = (zodSchema: ZodTypeAny) => {
+  if (typeof zodSchema.isOptional === 'function') {
+    return zodSchema.isOptional()
+  }
+  return zodSchema._def && 'isOptional' in zodSchema._def && zodSchema._def?.isOptional
+}
+
+const collectParameters = (
+  zod: ZodAdapter,
+  coll: Record<string, ZodTypeAny> | null,
+  location: ParameterLocation
+) =>
+  Object.entries(coll ?? {}).map(
+    ([name, zodSchema]) => {
+      return {
+        name,
+        in: location,
+        required: !isOptional(zodSchema),
+        schema: zod.toJsonSchema(zodSchema),
+      } satisfies ParameterObject | ReferenceObject
+    },
+    {} as Record<string, any>
+  )
 
 /**
  * Builds an OpenAPI JSON document from the provided route schemas and options.
@@ -36,21 +66,10 @@ export const buildOpenApiJson = (
       {} as Record<string, any>
     )
 
-    const parameters = Object.entries(schema.params ?? {}).map(
-      ([name, zodSchema]) => {
-        return {
-          name,
-          in: 'path',
-          required: !(
-            zodSchema._def &&
-            'isOptional' in zodSchema._def &&
-            zodSchema._def?.isOptional
-          ),
-          schema: zod.toJsonSchema(zodSchema),
-        }
-      },
-      {} as Record<string, any>
-    )
+    const parameters = [
+      ...collectParameters(zod, schema.params, 'path'),
+      ...collectParameters(zod, schema.query, 'query'),
+    ]
 
     paths[path] = {
       ...(paths[path] || {}),
