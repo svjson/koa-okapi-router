@@ -29,6 +29,15 @@ export const routeSchemas = (schemas: ModelSchemas) => {
         200: ThingSearchResponseSchema,
       },
     },
+    PostThingRouteSchema: {
+      summary: 'Create a new Thing',
+      description: 'Create a new Thing and assign it a new identity',
+      tags: ['Thing API'],
+      body: ThingSchema.omit({ id: true }),
+      response: {
+        201: ThingSchema,
+      },
+    },
     GetThingByIdRouteSchema: {
       summary: 'Get Thing by ID',
       description: 'Returns the thing with the ID',
@@ -38,6 +47,7 @@ export const routeSchemas = (schemas: ModelSchemas) => {
       },
       response: {
         200: ThingSchema,
+        404: z.null(),
       },
     },
     PutThingAtIdRouteSchema: {
@@ -49,6 +59,18 @@ export const routeSchemas = (schemas: ModelSchemas) => {
       },
       response: {
         204: z.null(),
+      },
+    },
+    DeleteThingWithIdRouteSchema: {
+      summary: 'Delete Thing with ID',
+      description: 'Wipe the Thing with ID from existence',
+      tags: ['Thing API'],
+      params: {
+        id: z.string(),
+      },
+      response: {
+        204: z.null(),
+        404: z.null(),
       },
     },
   }
@@ -102,6 +124,45 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
         },
       },
     },
+    post: {
+      summary: 'Create a new Thing',
+      description: 'Create a new Thing and assign it a new identity',
+      tags: ['Thing API'],
+      requestBody: {
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                type: { type: 'string' },
+              },
+              required: ['name', 'type'],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+      responses: {
+        201: {
+          description: 'Response',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  id: { type: 'number' },
+                  name: { type: 'string' },
+                  type: { type: 'string' },
+                },
+                required: ['id', 'name', 'type'],
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+      },
+    },
   },
   '/api/things/:id': {
     get: {
@@ -137,6 +198,18 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
             },
           },
         },
+        '404': {
+          //        description: 'The Thing has been updated',
+          description: 'Response',
+          content: {
+            'application/json': {
+              schema: {
+                enum: ['null'],
+                nullable: true,
+              },
+            },
+          },
+        },
       },
     },
     put: {
@@ -155,6 +228,47 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
       ],
       responses: {
         '204': {
+          //        description: 'The Thing has been updated',
+          description: 'Response',
+          content: {
+            'application/json': {
+              schema: {
+                enum: ['null'],
+                nullable: true,
+              },
+            },
+          },
+        },
+      },
+    },
+    delete: {
+      summary: 'Delete Thing with ID',
+      description: 'Wipe the Thing with ID from existence',
+      tags: ['Thing API'],
+      parameters: [
+        {
+          in: 'path',
+          name: 'id',
+          required: true,
+          schema: {
+            type: 'string',
+          },
+        },
+      ],
+      responses: {
+        '204': {
+          //description: "Here's the thing...",
+          description: 'Response',
+          content: {
+            'application/json': {
+              schema: {
+                enum: ['null'],
+                nullable: true,
+              },
+            },
+          },
+        },
+        '404': {
           //        description: 'The Thing has been updated',
           description: 'Response',
           content: {
@@ -212,6 +326,47 @@ export const openapiSchemasZodV4 = {
         },
       },
     },
+    post: {
+      summary: 'Create a new Thing',
+      description: 'Create a new Thing and assign it a new identity',
+      tags: ['Thing API'],
+      requestBody: {
+        content: {
+          'application/json': {
+            schema: {
+              $schema: 'https://json-schema.org/draft/2020-12/schema',
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                type: { type: 'string' },
+              },
+              required: ['name', 'type'],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+      responses: {
+        201: {
+          description: 'Response',
+          content: {
+            'application/json': {
+              schema: {
+                $schema: 'https://json-schema.org/draft/2020-12/schema',
+                type: 'object',
+                properties: {
+                  id: { type: 'number' },
+                  name: { type: 'string' },
+                  type: { type: 'string' },
+                },
+                required: ['id', 'name', 'type'],
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+      },
+    },
   },
   '/api/things/:id': {
     get: {
@@ -249,6 +404,17 @@ export const openapiSchemasZodV4 = {
             },
           },
         },
+        '404': {
+          description: 'Response',
+          content: {
+            'application/json': {
+              schema: {
+                $schema: 'https://json-schema.org/draft/2020-12/schema',
+                type: 'null',
+              },
+            },
+          },
+        },
       },
     },
     put: {
@@ -269,6 +435,47 @@ export const openapiSchemasZodV4 = {
       responses: {
         '204': {
           //        description: 'The Thing has been updated',
+          description: 'Response',
+          content: {
+            'application/json': {
+              schema: {
+                $schema: 'https://json-schema.org/draft/2020-12/schema',
+                type: 'null',
+              },
+            },
+          },
+        },
+      },
+    },
+    delete: {
+      summary: 'Delete Thing with ID',
+      description: 'Wipe the Thing with ID from existence',
+      tags: ['Thing API'],
+      parameters: [
+        {
+          in: 'path',
+          name: 'id',
+          required: true,
+          schema: {
+            $schema: 'https://json-schema.org/draft/2020-12/schema',
+            type: 'string',
+          },
+        },
+      ],
+      responses: {
+        '204': {
+          //        description: 'The Thing has been updated',
+          description: 'Response',
+          content: {
+            'application/json': {
+              schema: {
+                $schema: 'https://json-schema.org/draft/2020-12/schema',
+                type: 'null',
+              },
+            },
+          },
+        },
+        '404': {
           description: 'Response',
           content: {
             'application/json': {

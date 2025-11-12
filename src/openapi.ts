@@ -53,6 +53,18 @@ export const buildOpenApiJson = (
     const [method, path] = key.split(' ')
     const schema = schemas[key]
 
+    const requestBody: any = schema.body
+      ? {
+          requestBody: {
+            content: {
+              'application/json': {
+                schema: zod.toJsonSchema(schema.body),
+              },
+            },
+          },
+        }
+      : {}
+
     const responses = Object.entries(schema.response ?? {}).reduce(
       (acc, [status, zodSchema]) => {
         acc[status] = {
@@ -77,7 +89,8 @@ export const buildOpenApiJson = (
         summary: schema.summary,
         description: schema.description,
         tags: schema.tags,
-        parameters: parameters.length > 0 ? parameters : undefined,
+        ...(parameters.length > 0 ? { parameters } : {}),
+        ...requestBody,
         responses,
       },
     }

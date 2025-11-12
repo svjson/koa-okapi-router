@@ -67,7 +67,7 @@ describe.for([
         expect(jsonResponse).toEqual({
           openapi: '3.1.0',
           info: { title: 'Koa Application', version: '1.0.0' },
-          paths: { '/api/things': openapiSchemas['/api/things'] },
+          paths: { '/api/things': { get: openapiSchemas['/api/things'].get } },
         })
       })
     })
@@ -93,7 +93,31 @@ describe.for([
         expect(openapiDocs).toEqual({
           openapi: '3.1.0',
           info: { title: 'API', version: '1.0.0' },
-          paths: { '/api/things': openapiSchemas['/api/things'] },
+          paths: { '/api/things': { get: openapiSchemas['/api/things'].get } },
+        })
+      })
+
+      it('should build an openapi.json with a post body', () => {
+        // Given
+        const schema: RouteSchema = routes.PostThingRouteSchema
+
+        // When
+        const openapiDocs = buildOpenApiJson(
+          { 'post /api/things': schema },
+          {
+            openapi: {
+              info: { title: 'API', version: '1.0.0' },
+              jsonUrl: '/openapi.json',
+            },
+            schema: { zod: z },
+          }
+        )
+
+        // Then
+        expect(openapiDocs).toEqual({
+          openapi: '3.1.0',
+          info: { title: 'API', version: '1.0.0' },
+          paths: { '/api/things': { post: openapiSchemas['/api/things'].post } },
         })
       })
 
@@ -101,12 +125,14 @@ describe.for([
         // Given
         const getSchema: RouteSchema = routes.GetThingByIdRouteSchema
         const putSchema: RouteSchema = routes.PutThingAtIdRouteSchema
+        const deleteSchema: RouteSchema = routes.DeleteThingWithIdRouteSchema
 
         // When
         const openapiDocs = buildOpenApiJson(
           {
             'get /api/things/:id': getSchema,
             'put /api/things/:id': putSchema,
+            'delete /api/things/:id': deleteSchema,
           },
           {
             openapi: {
