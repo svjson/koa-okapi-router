@@ -1,6 +1,6 @@
 {
   "name": "koa-okapi-router",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "license": "ISC",
   "author": "Sven Johansson <sven.johansson@iteam.se>",
   "description": "Koa Router-wrapper adding validation and openapi generation.",
@@ -10,6 +10,9 @@
     "dist"
   ],
   "types": "./dist/index.d.ts",
+  "engines": {
+    "node": ">=24"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -19,6 +22,7 @@
   "scripts": {
     "build": "tsup",
     "lint": "eslint",
+    "prettier": "prettier -c ./src ./test",
     "test": "vitest run"
   },
   "peerDependencies": {
