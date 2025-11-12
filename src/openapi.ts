@@ -36,12 +36,29 @@ export const buildOpenApiJson = (
       {} as Record<string, any>
     )
 
+    const parameters = Object.entries(schema.params ?? {}).map(
+      ([name, zodSchema]) => {
+        return {
+          name,
+          in: 'path',
+          required: !(
+            zodSchema._def &&
+            'isOptional' in zodSchema._def &&
+            zodSchema._def?.isOptional
+          ),
+          schema: zod.toJsonSchema(zodSchema),
+        }
+      },
+      {} as Record<string, any>
+    )
+
     paths[path] = {
       ...(paths[path] || {}),
       [method.toLowerCase()]: {
         summary: schema.summary,
         description: schema.description,
         tags: schema.tags,
+        parameters: parameters.length > 0 ? parameters : undefined,
         responses,
       },
     }

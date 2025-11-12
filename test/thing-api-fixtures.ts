@@ -22,9 +22,9 @@ export const routeSchemas = (schemas: ModelSchemas) => {
       summary: 'The thing',
       description: 'Returns the THING',
       tags: ['Thing API'],
-      query: z.object({
+      query: {
         type: z.string(),
-      }),
+      },
       response: {
         200: ThingSearchResponseSchema,
       },
@@ -33,9 +33,9 @@ export const routeSchemas = (schemas: ModelSchemas) => {
       summary: 'Get Thing by ID',
       description: 'Returns the thing with the ID',
       tags: ['Thing API'],
-      params: z.object({
+      params: {
         id: z.string(),
-      }),
+      },
       response: {
         200: ThingSchema,
       },
@@ -44,9 +44,9 @@ export const routeSchemas = (schemas: ModelSchemas) => {
       summary: 'Update Thing with ID',
       description: 'Overwrites the Thing with ID',
       tags: ['Thing API'],
-      params: z.object({
+      params: {
         id: z.string(),
-      }),
+      },
       response: {
         204: z.null(),
       },
@@ -91,6 +91,16 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
       summary: 'Get Thing by ID',
       description: 'Returns the thing with the ID',
       tags: ['Thing API'],
+      parameters: [
+        {
+          in: 'path',
+          name: 'id',
+          required: true,
+          schema: {
+            type: 'string',
+          },
+        },
+      ],
       responses: {
         '200': {
           //description: "Here's the thing...",
@@ -116,6 +126,16 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
       summary: 'Update Thing with ID',
       description: 'Overwrites the Thing with ID',
       tags: ['Thing API'],
+      parameters: [
+        {
+          in: 'path',
+          name: 'id',
+          required: true,
+          schema: {
+            type: 'string',
+          },
+        },
+      ],
       responses: {
         '204': {
           //        description: 'The Thing has been updated',
@@ -170,6 +190,17 @@ export const openapiSchemasZodV4 = {
       summary: 'Get Thing by ID',
       description: 'Returns the thing with the ID',
       tags: ['Thing API'],
+      parameters: [
+        {
+          in: 'path',
+          name: 'id',
+          required: true,
+          schema: {
+            $schema: 'https://json-schema.org/draft/2020-12/schema',
+            type: 'string',
+          },
+        },
+      ],
       responses: {
         '200': {
           //description: "Here's the thing...",
@@ -196,6 +227,17 @@ export const openapiSchemasZodV4 = {
       summary: 'Update Thing with ID',
       description: 'Overwrites the Thing with ID',
       tags: ['Thing API'],
+      parameters: [
+        {
+          in: 'path',
+          name: 'id',
+          required: true,
+          schema: {
+            $schema: 'https://json-schema.org/draft/2020-12/schema',
+            type: 'string',
+          },
+        },
+      ],
       responses: {
         '204': {
           //        description: 'The Thing has been updated',
