@@ -1,6 +1,7 @@
 import { defineConfig } from 'tsup'
 import { builtinModules } from 'module'
 import pkg from './package.json' assert { type: 'json' }
+import { execSync } from 'child_process'
 
 export default defineConfig({
   entry: ['src/index.ts'],
@@ -17,4 +18,8 @@ export default defineConfig({
     ...Object.keys(pkg.peerDependencies ?? {}),
     ...builtinModules,
   ],
+  async onSuccess() {
+    // copy the plain JS wrapper into dist/ for runtime require
+    execSync('cp src/zod-v3-wrapper.js dist/zod-v3-wrapper.js')
+  },
 })

@@ -19,7 +19,7 @@ import z from 'zod'
 export const materializeOptions = (
   opts: DeepPartial<OkapiRouterOptions>
 ): OkapiRouterOptions => {
-  return mergeDefaults(
+  const merged = mergeDefaults(
     {
       openapi: {
         info: {
@@ -29,11 +29,14 @@ export const materializeOptions = (
         jsonUrl: '/openapi.json',
       },
       schema: {
-        zod: z,
+        zod: null,
       },
     },
     opts
   )
+
+  if (!merged.schema.zod) merged.schema.zod = z
+  return merged
 }
 
 /**

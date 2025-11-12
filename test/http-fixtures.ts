@@ -2,6 +2,7 @@ import Koa from 'koa'
 import { Server } from 'node:http'
 import KoaRouter from '@koa/router'
 import { makeOkapiRouter } from '@src/index'
+import { ZodLike } from './types'
 
 export const testClient = (port: number) => {
   return {
@@ -11,10 +12,10 @@ export const testClient = (port: number) => {
   }
 }
 
-export const koaFixture = () => {
+export const koaFixture = (z: ZodLike) => {
   const koa = new Koa()
   const koaRouter = new KoaRouter()
-  const okapiRouter = makeOkapiRouter(koaRouter)
+  const okapiRouter = makeOkapiRouter(koaRouter, { schema: { zod: z } })
   let server: Server | null
 
   return {

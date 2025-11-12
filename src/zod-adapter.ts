@@ -1,43 +1,99 @@
-import z, { ZodTypeAny } from 'zod'
+export interface ZodTypeAny {
+  nullable: Function
+  optional: Function
+}
 
+/**
+ * Adapter-interface allowing okapi to work with both zod v3 and
+ * v4.
+ */
 export interface ZodAdapter {
-  /** The user's provided zod instance */
+  /**
+   * The zod instance used by this adapter. Can be either
+   * zod version 3 or version 4.
+   */
   z: any
-  /** Numeric major version (3 or 4) */
+  /**
+   * Numeric major version (3 or 4)
+   */
   major: number
-  /** True if it supports the v4 API surface */
+  /**
+   * True if the zod instance supports the v4 API surface
+   */
   isV4: boolean
-  /** Convert a Zod schema to JSON Schema */
-  toJsonSchema(schema: ZodTypeAny): any
+  /**
+   * Convert a Zod schema to JSON Schema
+   */
+  toJsonSchema(schema: ZodTypeAny, name?: string): any
+}
+
+/**
+ * Determine the zod major version from a zod instance by
+ * inspecting the object structure.
+ *
+ * Not fool-proof by any means, but reliable enough.
+ */
+export const determineZodMajorVersion = (z: any): number => {
+  // Try version first (works when present)
+  const v = z?.version
+  if (typeof v === 'string') {
+    const m = /^(\d+)/.exec(v)
+    if (m) return Number(m[1]) >= 4 ? 4 : 3
+  }
+  // Reliable feature test: v4 schemas have toJSONSchema()
+  try {
+    if (typeof (z as any).toJSONSchema === 'function') return 4
+  } catch {
+    /* ignore */
+  }
+  return 3
 }
 
 /**
  * Creates a runtime adapter around the provided Zod instance.
  * Works with zod v3, zod/v4 preview, and zod >=4.0 (which re-exports v3).
  */
-export function makeZodAdapter(z: any): ZodAdapter {
+export const makeZodAdapter = (z: any): ZodAdapter => {
   if (!z || typeof z !== 'object') {
     throw new Error('makeZodAdapter: expected a Zod instance')
   }
 
-  // detect version
-  let major = 3
-  const ver = (z.version || z.ZodObject?.version || '') as string
-  const m = ver.match(/^(\d+)/)
-  if (m) major = parseInt(m[1], 10)
-  else if (z.ZodReadonly) major = 4 // quick heuristic for preview builds
-
-  const isV4 = major >= 4
-
-  // use the correct converter
-  const { zodToJsonSchema } = require('zod-to-json-schema')
+  const zodVersion = determineZodMajorVersion(z)
 
   return {
     z,
-    major,
-    isV4,
-    toJsonSchema(schema) {
-      return zodToJsonSchema(schema)
+    major: zodVersion,
+    isV4: zodVersion >= 4,
+    toJsonSchema: (schema: ZodTypeAny, name?: string): any => {
+      if (!schema || typeof schema !== 'object' || !('parse' in schema)) {
+        throw new Error('Invalid Zod schema passed to adapter')
+      }
+
+      /**
+       * Attempt to use the built-in toJSONSchema of zod 4, if present
+       */
+      if (typeof z.toJSONSchema === 'function') {
+        return z.toJSONSchema(schema, {
+          name,
+          $refStrategy: 'none',
+        })
+      }
+
+      /**
+       * Fall back to a wrapped zod-to-json-schema, with the actual zod
+       * instance bound.
+       *
+       * zod-to-json-schema internally imports 'zod', and if the instance
+       * checks of the schema objects do not match its imported versions
+       * it will bail out and generate empty schemas.
+       */
+      const bindConverter = require('./zod-v3-wrapper').bindConverter
+      const toJson = bindConverter(z)
+      return toJson(schema, {
+        name,
+        target: 'openApi3',
+        $refStrategy: 'none',
+      })
     },
   }
 }

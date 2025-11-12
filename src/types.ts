@@ -1,6 +1,14 @@
 import KoaRouter from '@koa/router'
 import { DefaultContext, DefaultState } from 'koa'
 
+export type ZodLike = {
+  object(shape: Record<string, any>): any
+  string(): any
+  number(): any
+  array(item: any): any
+  null(): any
+}
+
 import { AnyZodSchema } from './zod-adapter'
 
 /**
@@ -42,7 +50,7 @@ export interface OkapiRouterOptions {
     jsonUrl: string
   }
   schema: {
-    zod?: any
+    zod?: ZodLike
   }
 }
 

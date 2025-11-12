@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-import { koaFixture } from './fixtures'
+import { koaFixture } from './http-fixtures'
 
 describe('OkapiRouter', () => {
   describe('Method Registration', () => {
