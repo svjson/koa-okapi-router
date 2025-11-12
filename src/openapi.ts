@@ -1,6 +1,12 @@
-import { OkapiRouterOptions, RouteSchema } from './types'
+import { STATUS_CODES } from 'node:http'
+import {
+  DescribedSchema,
+  OkapiRouterOptions,
+  RouteSchema,
+  SchemaWithDescription,
+} from './types'
 import { makeZodAdapter } from './zod-adapter'
-import type { ZodAdapter, ZodTypeAny } from './zod-adapter'
+import type { AnyZodSchema, ZodAdapter, ZodTypeAny } from './zod-adapter'
 
 import type {
   OpenAPIObject,
@@ -19,20 +25,58 @@ const isOptional = (zodSchema: ZodTypeAny) => {
 
 const collectParameters = (
   zod: ZodAdapter,
-  coll: Record<string, ZodTypeAny> | null,
+  coll: Record<string, DescribedSchema> | null,
   location: ParameterLocation
 ) =>
   Object.entries(coll ?? {}).map(
-    ([name, zodSchema]) => {
+    ([name, typeDesc]) => {
+      const { schema, description } = normalizeDescribedSchema(typeDesc)
       return {
         name,
+        ...(description ? { description } : {}),
         in: location,
-        required: !isOptional(zodSchema),
-        schema: zod.toJsonSchema(zodSchema),
+        required: !isOptional(schema),
+        schema: zod.toJsonSchema(schema),
       } satisfies ParameterObject | ReferenceObject
     },
     {} as Record<string, any>
   )
+
+const normalizeDescribedSchema = (
+  typeDesc: DescribedSchema,
+  defaultDescription: string = ''
+): SchemaWithDescription => {
+  if (
+    typeDesc &&
+    typeof typeDesc === 'object' &&
+    'description' in typeDesc &&
+    typeof typeDesc.description === 'string'
+  ) {
+    return typeDesc
+  }
+
+  return {
+    description: defaultDescription,
+    schema: typeDesc as AnyZodSchema,
+  }
+}
+
+const toContent = (
+  zod: ZodAdapter,
+  typeDesc: DescribedSchema,
+  defaultDescription: string = ''
+) => {
+  const schemaDesc = normalizeDescribedSchema(typeDesc, defaultDescription)
+
+  return {
+    description: schemaDesc.description,
+    content: {
+      'application/json': {
+        schema: zod.toJsonSchema(schemaDesc.schema),
+      },
+    },
+  }
+}
 
 /**
  * Builds an OpenAPI JSON document from the provided route schemas and options.
@@ -55,24 +99,13 @@ export const buildOpenApiJson = (
 
     const requestBody: any = schema.body
       ? {
-          requestBody: {
-            content: {
-              'application/json': {
-                schema: zod.toJsonSchema(schema.body),
-              },
-            },
-          },
+          requestBody: toContent(zod, schema.body, 'Request Body'),
         }
       : {}
 
     const responses = Object.entries(schema.response ?? {}).reduce(
-      (acc, [status, zodSchema]) => {
-        acc[status] = {
-          description: 'Response',
-          content: {
-            'application/json': { schema: zod.toJsonSchema(zodSchema) },
-          },
-        }
+      (acc, [status, respDef]) => {
+        acc[status] = toContent(zod, respDef, STATUS_CODES[status] ?? '')
         return acc
       },
       {} as Record<string, any>

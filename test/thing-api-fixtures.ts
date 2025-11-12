@@ -23,7 +23,10 @@ export const routeSchemas = (schemas: ModelSchemas) => {
       description: 'Returns the THING',
       tags: ['Thing API'],
       query: {
-        type: z.string().optional(),
+        type: {
+          description: 'Filter by type',
+          schema: z.string().optional(),
+        },
       },
       response: {
         200: ThingSearchResponseSchema,
@@ -46,7 +49,7 @@ export const routeSchemas = (schemas: ModelSchemas) => {
         id: z.string(),
       },
       response: {
-        200: ThingSchema,
+        200: { description: "Here's the thing...", schema: ThingSchema },
         404: z.null(),
       },
     },
@@ -58,7 +61,10 @@ export const routeSchemas = (schemas: ModelSchemas) => {
         id: z.string(),
       },
       response: {
-        204: z.null(),
+        204: {
+          description: 'The Thing has been updated',
+          schema: z.null(),
+        },
       },
     },
     DeleteThingWithIdRouteSchema: {
@@ -66,10 +72,13 @@ export const routeSchemas = (schemas: ModelSchemas) => {
       description: 'Wipe the Thing with ID from existence',
       tags: ['Thing API'],
       params: {
-        id: z.string(),
+        id: {
+          description: 'ID of the Thing to delete',
+          schema: z.string(),
+        },
       },
       response: {
-        204: z.null(),
+        204: { description: 'Thing Deleted', schema: z.null() },
         404: z.null(),
       },
     },
@@ -86,8 +95,9 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
       tags: ['Thing API'],
       parameters: [
         {
-          in: 'query',
           name: 'type',
+          description: 'Filter by type',
+          in: 'query',
           required: false,
           schema: {
             anyOf: [
@@ -103,7 +113,7 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
       ],
       responses: {
         '200': {
-          description: 'Response',
+          description: 'OK',
           content: {
             'application/json': {
               schema: {
@@ -129,6 +139,7 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
       description: 'Create a new Thing and assign it a new identity',
       tags: ['Thing API'],
       requestBody: {
+        description: 'Request Body',
         content: {
           'application/json': {
             schema: {
@@ -145,7 +156,7 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
       },
       responses: {
         201: {
-          description: 'Response',
+          description: 'Created',
           content: {
             'application/json': {
               schema: {
@@ -181,8 +192,7 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
       ],
       responses: {
         '200': {
-          //description: "Here's the thing...",
-          description: 'Response',
+          description: "Here's the thing...",
           content: {
             'application/json': {
               schema: {
@@ -199,8 +209,7 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
           },
         },
         '404': {
-          //        description: 'The Thing has been updated',
-          description: 'Response',
+          description: 'Not Found',
           content: {
             'application/json': {
               schema: {
@@ -228,8 +237,7 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
       ],
       responses: {
         '204': {
-          //        description: 'The Thing has been updated',
-          description: 'Response',
+          description: 'The Thing has been updated',
           content: {
             'application/json': {
               schema: {
@@ -247,8 +255,9 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
       tags: ['Thing API'],
       parameters: [
         {
-          in: 'path',
           name: 'id',
+          description: 'ID of the Thing to delete',
+          in: 'path',
           required: true,
           schema: {
             type: 'string',
@@ -257,8 +266,7 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
       ],
       responses: {
         '204': {
-          //description: "Here's the thing...",
-          description: 'Response',
+          description: 'Thing Deleted',
           content: {
             'application/json': {
               schema: {
@@ -269,8 +277,7 @@ export const openapiSchemasZodV3: OpenAPISchemaFixture = {
           },
         },
         '404': {
-          //        description: 'The Thing has been updated',
-          description: 'Response',
+          description: 'Not Found',
           content: {
             'application/json': {
               schema: {
@@ -293,8 +300,9 @@ export const openapiSchemasZodV4 = {
       tags: ['Thing API'],
       parameters: [
         {
-          in: 'query',
           name: 'type',
+          description: 'Filter by type',
+          in: 'query',
           required: false,
           schema: {
             $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -304,7 +312,7 @@ export const openapiSchemasZodV4 = {
       ],
       responses: {
         '200': {
-          description: 'Response',
+          description: 'OK',
           content: {
             'application/json': {
               schema: {
@@ -331,6 +339,7 @@ export const openapiSchemasZodV4 = {
       description: 'Create a new Thing and assign it a new identity',
       tags: ['Thing API'],
       requestBody: {
+        description: 'Request Body',
         content: {
           'application/json': {
             schema: {
@@ -348,7 +357,7 @@ export const openapiSchemasZodV4 = {
       },
       responses: {
         201: {
-          description: 'Response',
+          description: 'Created',
           content: {
             'application/json': {
               schema: {
@@ -386,8 +395,7 @@ export const openapiSchemasZodV4 = {
       ],
       responses: {
         '200': {
-          //description: "Here's the thing...",
-          description: 'Response',
+          description: "Here's the thing...",
           content: {
             'application/json': {
               schema: {
@@ -405,7 +413,7 @@ export const openapiSchemasZodV4 = {
           },
         },
         '404': {
-          description: 'Response',
+          description: 'Not Found',
           content: {
             'application/json': {
               schema: {
@@ -434,8 +442,7 @@ export const openapiSchemasZodV4 = {
       ],
       responses: {
         '204': {
-          //        description: 'The Thing has been updated',
-          description: 'Response',
+          description: 'The Thing has been updated',
           content: {
             'application/json': {
               schema: {
@@ -453,8 +460,9 @@ export const openapiSchemasZodV4 = {
       tags: ['Thing API'],
       parameters: [
         {
-          in: 'path',
           name: 'id',
+          description: 'ID of the Thing to delete',
+          in: 'path',
           required: true,
           schema: {
             $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -464,8 +472,7 @@ export const openapiSchemasZodV4 = {
       ],
       responses: {
         '204': {
-          //        description: 'The Thing has been updated',
-          description: 'Response',
+          description: 'Thing Deleted',
           content: {
             'application/json': {
               schema: {
@@ -476,7 +483,7 @@ export const openapiSchemasZodV4 = {
           },
         },
         '404': {
-          description: 'Response',
+          description: 'Not Found',
           content: {
             'application/json': {
               schema: {

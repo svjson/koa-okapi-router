@@ -125,6 +125,19 @@ export interface OkapiRegisterParams {
 }
 
 /**
+ * Schema with an associated description for documentation purposes
+ */
+export interface SchemaWithDescription {
+  description: string
+  schema: AnyZodSchema
+}
+
+/**
+ * Schema that may include a description alongside the Zod schema
+ */
+export type DescribedSchema = SchemaWithDescription | AnyZodSchema
+
+/**
  * Schema definition for a route, including optional summary, description, tags,
  * and Zod schemas for params, query, body, and responses.
  *
@@ -148,17 +161,17 @@ export interface RouteSchema {
   /**
    * Zod schemas for validating route parameters
    */
-  params?: Record<string, AnyZodSchema>
+  params?: Record<string, SchemaWithDescription>
   /**
    * Zod schemas for validating query string parameters
    */
-  query?: Record<string, AnyZodSchema>
+  query?: Record<string, SchemaWithDescription>
   /**
-   * Zod schemas for validating query strings
+   * Zod schema for request body, optionally with description
    */
-  body?: AnyZodSchema
+  body?: DescribedSchema
   /**
    * Zod schemas for validating responses, keyed by HTTP status code.
    */
-  response?: Record<number, AnyZodSchema>
+  response?: Record<number, DescribedSchema>
 }

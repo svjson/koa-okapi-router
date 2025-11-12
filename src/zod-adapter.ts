@@ -68,7 +68,8 @@ export const makeZodAdapter = (z: any): ZodAdapter => {
     isV4: zodVersion >= 4,
     toJsonSchema: (schema: ZodTypeAny, name?: string): any => {
       if (!schema || typeof schema !== 'object' || !('parse' in schema)) {
-        throw new Error('Invalid Zod schema passed to adapter')
+        console.warn('Invalid Zod schema: ', schema)
+        return {}
       }
 
       /**
