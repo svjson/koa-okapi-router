@@ -59,6 +59,25 @@ export type InferSchemaMap<R> =
         }
 
 /**
+ * Infer a union type of all possible response body schema types
+ *
+ * The response schema map may be undefined or an empty map/object,
+ * in which case the type is `never`.
+ *
+ * @template R - The response schema map
+ *
+ * @returns The inferred union of response body types
+ */
+export type InferResponseBodyUnion<R> =
+  IsUndefined<R> extends true
+    ? never
+    : IsEmptyRecord<R> extends true
+      ? never
+      : {
+          [Status in keyof R & number]: z.infer<ExtractSchema<R[Status]>>
+        }[keyof R & number]
+
+/**
  * Type utility for inferring the input types described by a RouteSchema.
  *
  * This is used by TypedMiddleware to produce a parameterized type that
@@ -93,6 +112,15 @@ export type TypedMiddleware<
       status: WidenNever<InferSchema<CR>['status'], number>
       query: InferSchemaMap<Schema['query']>
       params: InferSchemaMap<Schema['params']>
+      response: Koa.DefaultContext['response'] & {
+        status: WidenNever<InferSchema<CR>['status'], number>
+        body: Schema['response'] extends ResponseSchemaMap
+          ? InferResponseBodyUnion<Schema['response']>
+          : any
+      }
+      body: Schema['response'] extends ResponseSchemaMap
+        ? InferResponseBodyUnion<Schema['response']>
+        : any
     }
   >
 ) => Promise<void> | void
