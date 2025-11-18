@@ -18,8 +18,8 @@ export type ExtractSchema<T> =
     ? never
     : T extends AnyZodSchema
       ? T
-      : T extends SchemaWithDescription<infer S extends AnyZodSchema>
-        ? S
+      : T extends SchemaWithDescription
+        ? T['schema']
         : never
 
 /**

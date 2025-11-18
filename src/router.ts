@@ -8,13 +8,12 @@ import type {
   OkapiRouter,
   OkapiRouterOptions,
   HttpMethod,
-  MiddlewareArg,
-  OkapiRegisterMethodFunction,
   RouteSchema,
   OkapiRegisterParams,
 } from './types'
 import { buildOpenApiJson } from './openapi'
 import z from 'zod'
+import { TypedMiddleware } from './infer-schema'
 
 export const materializeOptions = (
   opts: DeepPartial<OkapiRouterOptions>
@@ -67,9 +66,9 @@ export const makeOkapiRouter = (
    * All method-specific methods work as syntactic sugar over this
    * one function for registering routes.
    */
-  function register(
-    { path, method, schema }: OkapiRegisterParams,
-    middleware: MiddlewareArg
+  function register<Schema extends RouteSchema>(
+    { path, method, schema }: OkapiRegisterParams<Schema>,
+    middleware: any
   ) {
     koaRouter.register(path, [method], middleware)
     if (schema) {
@@ -83,14 +82,11 @@ export const makeOkapiRouter = (
    *
    */
   const router = HTTP_METHODS.reduce(
-    (
-      _router: Partial<Record<HttpMethod, OkapiRegisterMethodFunction>>,
-      method: HttpMethod
-    ) => {
-      _router[method] = (
+    (_router: Partial<Record<HttpMethod, any>>, method: HttpMethod) => {
+      _router[method] = <Schema extends RouteSchema>(
         urlPattern: string,
-        schema: RouteSchema,
-        middleware: MiddlewareArg
+        schema: Schema,
+        middleware: TypedMiddleware<Schema>
       ) => {
         register(
           {

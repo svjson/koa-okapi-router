@@ -10,6 +10,7 @@ export type ZodLike = {
 }
 
 import { AnyZodSchema } from './zod-adapter'
+import { TypedMiddleware } from './infer-schema'
 
 /**
  * HTTP methods supported by the router
@@ -30,15 +31,6 @@ export const HTTP_METHODS: HttpMethod[] = [
 ]
 
 /**
- * De-noisified Koa middleware type
- */
-export type Middleware = KoaRouter.Middleware<DefaultState, DefaultContext, unknown>
-/**
- * De-noisified one-or-many koa middleware type
- */
-export type MiddlewareArg = Middleware | Middleware[]
-
-/**
  * Options for configuring the OkapiRouter
  *
  * Applications using Zod schemas are expected to provide their Zod/z implementation,
@@ -55,22 +47,17 @@ export interface OkapiRouterOptions {
 }
 
 /**
- * Function signature for registering a route with a specific HTTP method, schema
- * and middleware handler(s)
- */
-export type OkapiRegisterMethodFunction = (
-  path: string | RegExp,
-  schema: RouteSchema,
-  middleware: MiddlewareArg
-) => void
-
-/**
  * OkapiRouter type extending KoaRouter with typed methods for each HTTP method
  * and route registration.
  */
-export type OkapiRouter = {
-  [M in HttpMethod]: OkapiRegisterMethodFunction
-} & {
+export type OkapiRouter = Record<
+  HttpMethod,
+  <S extends RouteSchema>(
+    path: string | RegExp,
+    schema: S,
+    middleware: TypedMiddleware<S>
+  ) => void
+> & {
   /**
    * Returns router middleware which dispatches a route matching the request.
    *
@@ -91,7 +78,10 @@ export type OkapiRouter = {
    * Registers a route with the given parameters and middleware.
    * @param params - Parameters for the route including path, method, and optional schema.
    */
-  register: (params: OkapiRegisterParams, middelware: MiddlewareArg) => void
+  register: (
+    params: OkapiRegisterParams<RouteSchema>,
+    middleware: TypedMiddleware<RouteSchema>
+  ) => void
   /**
    * Generates an OpenAPI JSON document for the registered routes.
    *
@@ -109,7 +99,7 @@ export type OkapiRouter = {
 /**
  * Parameters for registering a route, including path, method, and optional schema.
  */
-export interface OkapiRegisterParams {
+export interface OkapiRegisterParams<Schema extends RouteSchema> {
   /**
    * The route path (e.g., "/users/:id").
    */
@@ -121,7 +111,7 @@ export interface OkapiRegisterParams {
   /**
    * Optional schema definition for the route.
    */
-  schema?: RouteSchema
+  schema?: Schema
 }
 
 /**
