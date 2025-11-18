@@ -2,6 +2,7 @@ import { STATUS_CODES } from 'node:http'
 import {
   DescribedSchema,
   OkapiRouterOptions,
+  PathParameterMap,
   RouteSchema,
   SchemaWithDescription,
 } from './types'
@@ -25,7 +26,7 @@ const isOptional = (zodSchema: ZodTypeAny) => {
 
 const collectParameters = (
   zod: ZodAdapter,
-  coll: Record<string, DescribedSchema> | null,
+  coll: PathParameterMap | undefined,
   location: ParameterLocation
 ) =>
   Object.entries(coll ?? {}).map(
@@ -43,7 +44,7 @@ const collectParameters = (
   )
 
 const normalizeDescribedSchema = (
-  typeDesc: DescribedSchema,
+  typeDesc: DescribedSchema | undefined,
   defaultDescription: string = ''
 ): SchemaWithDescription => {
   if (
