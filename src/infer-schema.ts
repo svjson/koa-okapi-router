@@ -87,6 +87,7 @@ export type InferResponseBodyUnion<R> =
  * @template Schema - The RouteSchema from which to infer types.
  */
 export type InferSchema<Schema extends RouteSchema> = {
+  body: Schema['body'] extends z.ZodTypeAny ? z.infer<Schema['body']> : undefined
   status: Schema['response'] extends ResponseSchemaMap ? keyof Schema['response'] : number
 }
 
@@ -112,6 +113,10 @@ export type TypedMiddleware<
       status: WidenNever<InferSchema<CR>['status'], number>
       query: InferSchemaMap<Schema['query']>
       params: InferSchemaMap<Schema['params']>
+      request: {
+        body: InferSchema<Schema>['body']
+        query: InferSchemaMap<Schema['query']>
+      }
       response: Koa.DefaultContext['response'] & {
         status: WidenNever<InferSchema<CR>['status'], number>
         body: Schema['response'] extends ResponseSchemaMap
