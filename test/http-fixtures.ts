@@ -9,6 +9,15 @@ export const testClient = (port: number) => {
     get: async (url: string) => {
       return await fetch(`http://localhost:${port}${url}`)
     },
+    post: async (url: string, body: any) => {
+      return await fetch(`http://localhost:${port}${url}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      })
+    },
   }
 }
 
@@ -23,7 +32,7 @@ export const koaFixture = (z: ZodLike) => {
     koaRouter,
     okapiRouter,
     port: () => {
-      return (server.address() as any).port
+      return server == null ? 0 : (server.address() as any).port
     },
     client: function () {
       return testClient(this.port())
@@ -34,7 +43,7 @@ export const koaFixture = (z: ZodLike) => {
       server = koa.listen(0)
     },
     stop: () => {
-      server.close()
+      if (server != null) server.close()
     },
   }
 }

@@ -24,6 +24,74 @@ describe('OkapiRouter', () => {
       expect(body).toEqual({ hello: 'world' })
     })
 
+    it('should expose GET endpoint with empty schema', async () => {
+      // Given
+      const fixture = koaFixture(z)
+      const { okapiRouter } = fixture
+
+      // When
+      okapiRouter.get(
+        '/api/hello',
+        { body: z.object({ hello: z.string() }) },
+        async (ctx) => {
+          ctx.status = 200
+        }
+      )
+      fixture.start()
+
+      // Then
+      const response = await fixture.client().get('/api/hello')
+      const body = await response.text()
+
+      expect(body).toEqual('OK')
+    })
+
+    it('should expose GET endpoint with response body schema', async () => {
+      // Given
+      const fixture = koaFixture(z)
+      const { okapiRouter } = fixture
+
+      // When
+      okapiRouter.get(
+        '/api/hello',
+        { response: { 200: z.object({ hello: z.string() }) } },
+        async (ctx) => {
+          ctx.status = 200
+          ctx.response.body = { hello: 'world' }
+        }
+      )
+      fixture.start()
+
+      // Then
+      const response = await fixture.client().get('/api/hello')
+      const body = await response.json()
+
+      expect(body).toEqual({ hello: 'world' })
+    })
+
+    it('should expose POST endpoint with response body schema', async () => {
+      // Given
+      const fixture = koaFixture(z)
+      const { okapiRouter } = fixture
+
+      // When
+      okapiRouter.post(
+        '/api/hello',
+        { response: { 200: z.object({ hello: z.string() }) } },
+        async (ctx) => {
+          ctx.status = 200
+          ctx.body = { hello: 'world' }
+        }
+      )
+      fixture.start()
+
+      // Then
+      const response = await fixture.client().post('/api/hello', {})
+      const body = await response.json()
+
+      expect(body).toEqual({ hello: 'world' })
+    })
+
     it('should expose GET endpoint with path parameter', async () => {
       // Given
       const fixture = koaFixture(z)

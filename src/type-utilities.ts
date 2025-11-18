@@ -1,4 +1,9 @@
 /**
+ * Type utility that widens/remaps T to W if T is `never`
+ */
+export type WidenNever<T, W> = [T] extends [never] ? W : T
+
+/**
  * Type utility that determines if a concrete type is undefined or not.
  */
 export type IsUndefined<T> = [T] extends [undefined] ? true : false

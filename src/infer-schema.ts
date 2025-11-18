@@ -1,8 +1,24 @@
 import z from 'zod'
 import Koa from 'koa'
-import { RouteSchema, SchemaWithDescription } from './types'
-import { IsEmptyRecord, IsUndefined } from './type-utilities'
+import { ResponseSchemaMap, RouteSchema, SchemaWithDescription } from './types'
+import { IsEmptyRecord, IsUndefined, WidenNever } from './type-utilities'
 import { AnyZodSchema } from './zod-adapter'
+
+/**
+ * Narrow a RouteSchema to its exact type, filling all non-defined
+ * keys with undefined.
+ *
+ * This is done to be able to reliably infer types for properties
+ * that are otherwise optionally defined due to the flexibility
+ * of RouteSchema
+ *
+ * @template T - The RouteSchema to narrow
+ *
+ * @returns The concrete RouteSchema with all keys defined
+ */
+export type ConcreteRouteSchema<T extends RouteSchema> = {
+  [K in keyof RouteSchema]: K extends keyof T ? T[K] : undefined
+}
 
 /**
  * Type utility that extracts the actual schema from DescribedSchema,
@@ -43,6 +59,19 @@ export type InferSchemaMap<R> =
         }
 
 /**
+ * Type utility for inferring the input types described by a RouteSchema.
+ *
+ * This is used by TypedMiddleware to produce a parameterized type that
+ * coerces the koa context the express the expected types for input and
+ * output.
+ *
+ * @template Schema - The RouteSchema from which to infer types.
+ */
+export type InferSchema<Schema extends RouteSchema> = {
+  status: Schema['response'] extends ResponseSchemaMap ? keyof Schema['response'] : number
+}
+
+/**
  * Describes a parameterized and type-enhanced middleware function
  * according to RouteSchema.
  *
@@ -54,10 +83,14 @@ export type InferSchemaMap<R> =
  * @template S - The RouteSchema defining the types for params, query,
  *               body, and response.
  */
-export type TypedMiddleware<Schema extends RouteSchema> = (
+export type TypedMiddleware<
+  Schema extends RouteSchema,
+  CR = ConcreteRouteSchema<Schema>,
+> = (
   ctx: Koa.ParameterizedContext<
     Koa.DefaultState,
     Koa.DefaultContext & {
+      status: WidenNever<InferSchema<CR>['status'], number>
       query: InferSchemaMap<Schema['query']>
       params: InferSchemaMap<Schema['params']>
     }

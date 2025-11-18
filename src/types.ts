@@ -1,5 +1,4 @@
 import KoaRouter from '@koa/router'
-import { DefaultContext, DefaultState } from 'koa'
 
 export type ZodLike = {
   object(shape: Record<string, any>): any
@@ -123,18 +122,37 @@ export interface SchemaWithDescription {
 }
 
 /**
- * Schema that may include a description alongside the Zod schema
+ * Schema that may include a description alongside the Zod schema.
  */
 export type DescribedSchema = SchemaWithDescription | AnyZodSchema
 
 /**
- * Schema that describes the path parameters of a route
+ * Schema that describes the path parameters of a route.
+ *
+ * Each path parameter name maps to a DescribedSchema representing
+ * the expected type of that path parameter, optionally providing
+ * a `description` for OpenAPI/documentation purposes
  */
 export type PathParameterMap = { [Name in string]?: DescribedSchema }
+
 /**
- * Schema that describes the query parameters of a route
+ * Schema that describes the query parameters of a route.
+ *
+ * Each query parameter name maps to a DescribedSchema representing
+ * the expected type of that query parameter, optionally providing
+ * a `description` for OpenAPI/documentation purposes
  */
 export type QueryParameterMap = { [Name in string]?: DescribedSchema }
+
+/**
+ * Schema that describes the possible response statuses and the response
+ * body type(s) associated with them.
+ *
+ * Each status code maps to a DescribedSchema representing the response body
+ * for that status, optionally providing a `description` for
+ * OpenAPI/documentation purposes
+ */
+export type ResponseSchemaMap = { [Status in number]?: DescribedSchema }
 
 /**
  * Schema definition for a route, including optional summary, description, tags,
