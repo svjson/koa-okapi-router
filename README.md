@@ -2,7 +2,7 @@
 # koa-okapi-router
 
 > Zod-aware router abstraction for Koa, providing a declarative Fastify-style
-> schema declaration and (not yet) type-safe middleware input/output
+> schema declaration and type-safe middleware input/output
 
 [![npm version](https://img.shields.io/npm/v/koa-okapi-router.svg)](https://www.npmjs.com/package/koa-okapi-router)
 [![GitHub](https://img.shields.io/badge/GitHub-svjson%2Fkoa--okapi--router-blue?logo=github)](https://github.com/svjson/koa-okapi-router)
@@ -12,6 +12,7 @@
 ## Features
 
 - Declare routes with Zod schemas
+- Type-safe `ctx: ParameterizedContext` in route handling middleware
 - Support for zod v3 and v4
 - Generate openapi.json
 
@@ -103,6 +104,11 @@ app.use(
 ```
 
 ## Version History
+
+### 0.1.1 - Type-safe Koa context
+
+- Infer types from declared route schemas
+- Parameterize route handling middleware
 
 ### 0.1.0 - Initial Release - 2025-11-12
 
