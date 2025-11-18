@@ -28,7 +28,7 @@ export const materializeOptions = (
         jsonUrl: '/openapi.json',
       },
       schema: {
-        zod: null,
+        zod: undefined,
       },
     },
     opts
