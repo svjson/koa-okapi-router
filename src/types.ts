@@ -138,6 +138,15 @@ export interface SchemaWithDescription {
 export type DescribedSchema = SchemaWithDescription | AnyZodSchema
 
 /**
+ * Schema that describes the path parameters of a route
+ */
+export type PathParameterMap = { [Name in string]?: DescribedSchema }
+/**
+ * Schema that describes the query parameters of a route
+ */
+export type QueryParameterMap = { [Name in string]?: DescribedSchema }
+
+/**
  * Schema definition for a route, including optional summary, description, tags,
  * and Zod schemas for params, query, body, and responses.
  *
@@ -159,13 +168,15 @@ export interface RouteSchema {
    */
   tags?: string[]
   /**
-   * Zod schemas for validating route parameters
+   * Optional map of Zod schemas for inferring and validating route
+   * parameters
    */
-  params?: Record<string, SchemaWithDescription>
+  params?: PathParameterMap
   /**
-   * Zod schemas for validating query string parameters
+   * Optional map of Zod schemas for inferring and validating query
+   * string parameters
    */
-  query?: Record<string, SchemaWithDescription>
+  query?: PathParameterMap
   /**
    * Zod schema for request body, optionally with description
    */
