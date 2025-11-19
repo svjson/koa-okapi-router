@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest'
 import { makeZodAdapter } from '@src/zod-adapter'
 
 describe('ZodAdapter', () => {
-  describe('makeZodAdapter', () => {
-    describe('zod v4', () => {
+  describe('zod v4', () => {
+    const zodAdapter = makeZodAdapter(z)
+
+    describe('makeZodAdapter', () => {
       it('should identify zod/v4', () => {
         // When
         const zodAdapter = makeZodAdapter(z)
@@ -15,7 +17,53 @@ describe('ZodAdapter', () => {
           major: 4,
         })
       })
+    })
 
+    describe('isOptionalType', () => {
+      it('should return true for zod optional', () => {
+        // Given
+        const zodType = z.optional(z.string())
+
+        // Then
+        expect(zodAdapter.isOptionalType(zodType)).toBe(true)
+      })
+
+      it('should return false for zod string', () => {
+        // Given
+        const zodType = z.string()
+
+        // Then
+        expect(zodAdapter.isOptionalType(zodType)).toBe(false)
+      })
+    })
+
+    describe('isArrayType', () => {
+      it('should return true for zod array of string', () => {
+        // Given
+        const zodType = z.array(z.string())
+
+        // Then
+        expect(zodAdapter.isArrayType(zodType)).toBe(true)
+      })
+
+      it('should return true for optional zod array of string', () => {
+        // Given
+        const zodType = z.optional(z.array(z.string()))
+
+        // Then
+        expect(zodAdapter.isArrayType(zodType)).toBe(true)
+      })
+
+      it('should return false for zod string', () => {
+        // Given
+        const zodType = z.string()
+
+        // Then
+        expect(zodAdapter.isArrayType(zodType)).toBe(false)
+      })
+    })
+
+    describe('toJsonSchema', () => {
       it('should convert zod schema to JsonSchema', () => {
         // Given
         const zodAdapter = makeZodAdapter(z)

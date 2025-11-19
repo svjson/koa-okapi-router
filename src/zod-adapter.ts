@@ -25,6 +25,10 @@ export interface ZodAdapter {
    */
   isArrayType(schema: ZodTypeAny): boolean
   /**
+   * Unwrap the inner type of an optional
+   */
+  unwrapOptional(schema: ZodTypeAny): ZodTypeAny
+  /**
    * Convert a Zod schema to JSON Schema
    */
   toJsonSchema(schema: ZodTypeAny, name?: string): any
@@ -60,7 +64,7 @@ export const makeZodAdapter = (z: any): ZodAdapter => {
 
   const zodVersion = determineZodMajorVersion(z)
 
-  return {
+  const adapter = {
     z,
     major: zodVersion,
     isV4: zodVersion >= 4,
@@ -73,10 +77,16 @@ export const makeZodAdapter = (z: any): ZodAdapter => {
       )
     },
     isArrayType: (zodSchema: ZodTypeAny): boolean => {
+      if (adapter.isOptionalType(zodSchema)) {
+        return adapter.isArrayType(adapter.unwrapOptional(zodSchema))
+      }
       return (
         zodSchema?._def?.typeName === 'ZodArray' ||
         ('def' in zodSchema && (zodSchema?.def as any)?.type === 'array')
       )
+    },
+    unwrapOptional: (zodSchema: ZodTypeAny): ZodTypeAny => {
+      return zodSchema._def && 'innerType' in zodSchema._def && zodSchema._def?.innerType
     },
     toJsonSchema: (schema: ZodTypeAny, name?: string): any => {
       if (!schema || typeof schema !== 'object' || !('parse' in schema)) {
@@ -115,6 +125,7 @@ export const makeZodAdapter = (z: any): ZodAdapter => {
       })
     },
   }
+  return adapter
 }
 
 export interface ZodTypeAny {

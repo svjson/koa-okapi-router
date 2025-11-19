@@ -146,6 +146,34 @@ const makeOpenAPIJsonSuite = <Z extends ZodLike, Routes extends RoutesBase>(
         },
       ])
     })
+
+    it('should produce parameter with style-property for optional string arrays in query', () => {
+      // When
+      const queryParams = collectParameters(
+        zodAdapter,
+        {
+          q: z.optional(z.array(z.string())),
+        },
+        'query'
+      )
+
+      // Then
+      expect(queryParams).toMatchObject([
+        {
+          name: 'q',
+          in: 'query',
+          style: 'form',
+          explode: false,
+          required: false,
+          schema: {
+            type: 'array',
+            items: {
+              type: 'string',
+            },
+          },
+        },
+      ])
+    })
   })
 
   describe('buildOpenApiJson', () => {

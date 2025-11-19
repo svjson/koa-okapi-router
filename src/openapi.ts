@@ -38,12 +38,31 @@ export const collectParameters = (
         ...(description ? { description } : {}),
         in: location,
         required: !zod.isOptionalType(schema),
-        schema: zod.toJsonSchema(schema),
+        schema: unwrapOptionals(zod.toJsonSchema(schema)),
         ...(zod.isArrayType(schema) ? { explode: false, style: 'form' } : {}),
       } satisfies ParameterObject | ReferenceObject
     },
     {} as Record<string, any>
   )
+
+/**
+ * Unwraps optionals declared as anyOf in a json schema
+ *
+ * @param schema - The JSON schema to unwrap.
+ * @returns The unwrapped JSON schema.
+ */
+const unwrapOptionals = (schema: any): any => {
+  if (!schema || typeof schema !== 'object') return schema
+
+  if (Array.isArray(schema.anyOf)) {
+    const inner = schema.anyOf.find(
+      (s: any) => !(s.not && Object.keys(s.not).length === 0)
+    )
+    if (inner) return unwrapOptionals(inner)
+  }
+
+  return schema
+}
 
 /**
  * Normalize a DescribedSchema instance to the SchemaWithDescription shape

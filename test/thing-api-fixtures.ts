@@ -93,14 +93,7 @@ export const openapiSchemasZodV3 = {
           in: 'query',
           required: false,
           schema: {
-            anyOf: [
-              {
-                not: {},
-              },
-              {
-                type: 'string',
-              },
-            ],
+            type: 'string',
           },
         },
       ],

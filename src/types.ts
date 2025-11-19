@@ -15,6 +15,7 @@ export type ZodLike = {
   string(): any
   number(): any
   array(item: any): any
+  optional(item: any): any
   null(): any
 }
 
