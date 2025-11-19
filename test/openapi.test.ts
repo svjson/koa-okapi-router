@@ -5,10 +5,12 @@ import KoaRouter from '@koa/router'
 import { koaSwagger } from 'koa2-swagger-ui'
 
 import type { RouteSchema, ZodLike } from '@src/types'
-import { buildOpenApiJson } from '@src/openapi'
+import { buildOpenApiJson, collectParameters } from '@src/openapi'
+import { makeZodAdapter } from '@src/zod-adapter'
 
 import { koaFixture } from './http-fixtures'
 import {
+  ModelSchemas,
   OpenAPISchemaFixture,
   openapiSchemasZodV3,
   openapiSchemasZodV4,
@@ -17,8 +19,11 @@ import {
 
 const ThingSchemaV3 = z3.object({ id: z3.number(), name: z3.string(), type: z3.string() })
 const ThingSearchResponseSchemaV3 = z3.array(ThingSchemaV3)
+const RockPaperScissorsEnumV3 = z3.enum(['rock', 'paper', 'scissors'])
+
 const ThingSchemaV4 = z4.object({ id: z4.number(), name: z4.string(), type: z4.string() })
 const ThingSearchResponseSchemaV4 = z4.array(ThingSchemaV4)
+const RockPaperScissorsEnumV4 = z4.enum(['rock', 'paper', 'scissors'])
 
 type RoutesBase = {
   GetThingsRouteSchema: any
@@ -85,8 +90,35 @@ const makeSwaggerUISuite = <Z extends ZodLike, Routes extends RoutesBase>(
 const makeOpenAPIJsonSuite = <Z extends ZodLike, Routes extends RoutesBase>(
   z: Z,
   openapiSchemas: OpenAPISchemaFixture,
+  schemas: ModelSchemas,
   routes: Routes
 ) => {
+  describe('collectParameters', () => {
+    it('should produce schema with enum values for enum type query parameter', () => {
+      // When
+      const queryParams = collectParameters(
+        makeZodAdapter(z),
+        {
+          move: schemas.RockPaperScissorsEnum,
+        },
+        'query'
+      )
+
+      // Then
+      expect(queryParams).toMatchObject([
+        {
+          name: 'move',
+          in: 'query',
+          required: true,
+          schema: {
+            type: 'string',
+            enum: ['rock', 'paper', 'scissors'],
+          },
+        },
+      ])
+    })
+  })
+
   describe('buildOpenApiJson', () => {
     it('should build an openapi.json from a single route schema', () => {
       // Given
@@ -177,9 +209,10 @@ describe('OpenAPI', () => {
       ThingSchema: ThingSchemaV3,
       ThingSchemaWithoutId: ThingSchemaV3.omit({ id: true }),
       ThingSearchResponseSchema: ThingSearchResponseSchemaV3,
+      RockPaperScissorsEnum: RockPaperScissorsEnumV3,
     }
     makeSwaggerUISuite(z3, openapiSchemasZodV3, routeSchemas(schemas))
-    makeOpenAPIJsonSuite(z3, openapiSchemasZodV3, routeSchemas(schemas))
+    makeOpenAPIJsonSuite(z3, openapiSchemasZodV3, schemas, routeSchemas(schemas))
   })
   describe('zod 4', () => {
     const schemas = {
@@ -187,8 +220,9 @@ describe('OpenAPI', () => {
       ThingSchema: ThingSchemaV4,
       ThingSchemaWithoutId: ThingSchemaV4.omit({ id: true }),
       ThingSearchResponseSchema: ThingSearchResponseSchemaV4,
+      RockPaperScissorsEnum: RockPaperScissorsEnumV4,
     }
     makeSwaggerUISuite(z4, openapiSchemasZodV4, routeSchemas(schemas))
-    makeOpenAPIJsonSuite(z4, openapiSchemasZodV4, routeSchemas(schemas))
+    makeOpenAPIJsonSuite(z4, openapiSchemasZodV4, schemas, routeSchemas(schemas))
   })
 })

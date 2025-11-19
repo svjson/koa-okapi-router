@@ -24,7 +24,15 @@ const isOptional = (zodSchema: ZodTypeAny) => {
   return zodSchema._def && 'isOptional' in zodSchema._def && zodSchema._def?.isOptional
 }
 
-const collectParameters = (
+/**
+ * Collect path or query parameters and produce openapi definitions
+ * for these.
+ *
+ * @param zod - The ZodAdapter instance for schema conversion.
+ * @param coll - A map of parameter names to their Zod schemas or described schemas.
+ * @param location - The location of the parameters (either 'path' or 'query').
+ */
+export const collectParameters = (
   zod: ZodAdapter,
   coll: PathParameterMap | undefined,
   location: ParameterLocation

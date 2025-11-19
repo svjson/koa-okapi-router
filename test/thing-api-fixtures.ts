@@ -1,11 +1,12 @@
 import { AnyZodSchema } from '@src/zod-adapter'
 import { ZodLike } from '@src/types'
 
-interface ModelSchemas {
+export interface ModelSchemas {
   z: ZodLike
   ThingSchemaWithoutId: AnyZodSchema
   ThingSchema: AnyZodSchema
   ThingSearchResponseSchema: any
+  RockPaperScissorsEnum: AnyZodSchema
 }
 
 export const routeSchemas = <MS extends ModelSchemas>(schemas: MS) => {
