@@ -1,10 +1,3 @@
-export interface ZodTypeAny {
-  nullable: Function
-  optional: Function
-  isOptional?: Function
-  _def: any
-}
-
 /**
  * Adapter-interface allowing okapi to work with both zod v3 and
  * v4.
@@ -23,6 +16,14 @@ export interface ZodAdapter {
    * True if the zod instance supports the v4 API surface
    */
   isV4: boolean
+  /**
+   * Query if a zod type is optional
+   */
+  isOptionalType(schema: ZodTypeAny): boolean
+  /**
+   * Query if a zod type is an array
+   */
+  isArrayType(schema: ZodTypeAny): boolean
   /**
    * Convert a Zod schema to JSON Schema
    */
@@ -63,6 +64,20 @@ export const makeZodAdapter = (z: any): ZodAdapter => {
     z,
     major: zodVersion,
     isV4: zodVersion >= 4,
+    isOptionalType: (zodSchema: ZodTypeAny): boolean => {
+      if (typeof zodSchema.isOptional === 'function') {
+        return zodSchema.isOptional()
+      }
+      return (
+        zodSchema._def && 'isOptional' in zodSchema._def && zodSchema._def?.isOptional
+      )
+    },
+    isArrayType: (zodSchema: ZodTypeAny): boolean => {
+      return (
+        zodSchema?._def?.typeName === 'ZodArray' ||
+        ('def' in zodSchema && (zodSchema?.def as any)?.type === 'array')
+      )
+    },
     toJsonSchema: (schema: ZodTypeAny, name?: string): any => {
       if (!schema || typeof schema !== 'object' || !('parse' in schema)) {
         console.warn('Invalid Zod schema: ', schema)
@@ -100,6 +115,13 @@ export const makeZodAdapter = (z: any): ZodAdapter => {
       })
     },
   }
+}
+
+export interface ZodTypeAny {
+  nullable: Function
+  optional: Function
+  isOptional?: Function
+  _def: any
 }
 
 // Convenience type alias usable in route schemas

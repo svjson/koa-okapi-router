@@ -17,13 +17,6 @@ import type {
   ReferenceObject,
 } from 'openapi3-ts/oas31'
 
-const isOptional = (zodSchema: ZodTypeAny) => {
-  if (typeof zodSchema.isOptional === 'function') {
-    return zodSchema.isOptional()
-  }
-  return zodSchema._def && 'isOptional' in zodSchema._def && zodSchema._def?.isOptional
-}
-
 /**
  * Collect path or query parameters and produce openapi definitions
  * for these.
@@ -44,13 +37,22 @@ export const collectParameters = (
         name,
         ...(description ? { description } : {}),
         in: location,
-        required: !isOptional(schema),
+        required: !zod.isOptionalType(schema),
         schema: zod.toJsonSchema(schema),
+        ...(zod.isArrayType(schema) ? { explode: false, style: 'form' } : {}),
       } satisfies ParameterObject | ReferenceObject
     },
     {} as Record<string, any>
   )
 
+/**
+ * Normalize a DescribedSchema instance to the SchemaWithDescription shape
+ *
+ * @param typeDesc - The DescribedSchema to normalize.
+ * @param defaultDescription - A default description to use if typeDesc is
+ *                             a plain zod type
+ * @returns A SchemaWithDescription object.
+ */
 const normalizeDescribedSchema = (
   typeDesc: DescribedSchema | undefined,
   defaultDescription: string = ''
@@ -70,6 +72,15 @@ const normalizeDescribedSchema = (
   }
 }
 
+/**
+ * Transforms a HTTP request or response body schema to an openapi schema
+ * content/payload.
+ *
+ * @param zod - The ZodAdapter instance for schema conversion.
+ * @param typeDesc - The DescribedSchema representing the body schema.
+ * @param defaultDescription - A default description to use if typeDesc
+ *                            lacks one.
+ */
 const toContent = (
   zod: ZodAdapter,
   typeDesc: DescribedSchema,
