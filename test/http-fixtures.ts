@@ -2,7 +2,7 @@ import Koa from 'koa'
 import { Server } from 'node:http'
 import KoaRouter from '@koa/router'
 import { makeOkapiRouter } from '@src/index'
-import { ZodLike } from './types'
+import { ZodLike } from '@src/types'
 
 export const testClient = (port: number) => {
   return {

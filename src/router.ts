@@ -10,10 +10,10 @@ import type {
   HttpMethod,
   RouteSchema,
   OkapiRegisterParams,
+  TypedMiddleware,
 } from './types'
 import { buildOpenApiJson } from './openapi'
 import z from 'zod'
-import { TypedMiddleware } from './infer-schema'
 
 export const materializeOptions = (
   opts: DeepPartial<OkapiRouterOptions>

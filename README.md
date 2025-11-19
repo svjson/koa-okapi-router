@@ -103,9 +103,15 @@ app.use(
 )
 ```
 
+
 ## Version History
 
-### 0.1.1 - Type-safe Koa context
+### 0.1.2 - Better type-inference - ?
+
+- Better type-inference for koa context
+- Test suites for type inference
+
+### 0.1.1 - Type-safe Koa context - 2025-11-18
 
 - Infer types from declared route schemas
 - Parameterize route handling middleware

@@ -1,7 +1,11 @@
 import z from 'zod'
-import Koa from 'koa'
-import { ResponseSchemaMap, RouteSchema, SchemaWithDescription } from './types'
-import { IsEmptyRecord, IsUndefined, WidenNever } from './type-utilities'
+import {
+  DefaultKoaContext,
+  ResponseSchemaMap,
+  RouteSchema,
+  SchemaWithDescription,
+} from './types'
+import { IsEmptyRecord, IsUndefined } from './type-utilities'
 import { AnyZodSchema } from './zod-adapter'
 
 /**
@@ -16,8 +20,8 @@ import { AnyZodSchema } from './zod-adapter'
  *
  * @returns The concrete RouteSchema with all keys defined
  */
-export type ConcreteRouteSchema<T extends RouteSchema> = {
-  [K in keyof RouteSchema]: K extends keyof T ? T[K] : undefined
+export type ConcreteRouteSchema<T> = {
+  [K in keyof RouteSchema]-?: K extends keyof T ? T[K] : undefined
 }
 
 /**
@@ -49,11 +53,11 @@ export type ExtractSchema<T> =
  *
  * @returns The inferred schema map
  */
-export type InferSchemaMap<R> =
+export type InferSchemaMap<R, ElseDefault = never> =
   IsUndefined<R> extends true
-    ? never
+    ? ElseDefault
     : IsEmptyRecord<R> extends true
-      ? never
+      ? ElseDefault
       : {
           [Name in keyof R & string]: z.infer<ExtractSchema<R[Name]>>
         }
@@ -64,68 +68,54 @@ export type InferSchemaMap<R> =
  * The response schema map may be undefined or an empty map/object,
  * in which case the type is `never`.
  *
- * @template R - The response schema map
+ * @template Schema - The route schema declaration to infer response
+ *                    bodies from.
  *
  * @returns The inferred union of response body types
  */
-export type InferResponseBodyUnion<R> =
-  IsUndefined<R> extends true
-    ? never
-    : IsEmptyRecord<R> extends true
+export type InferResponseBodyUnion<
+  Schema,
+  Responses = ConcreteRouteSchema<Schema>['response'],
+> =
+  IsUndefined<Responses> extends true
+    ? DefaultKoaContext['body']
+    : IsEmptyRecord<Responses> extends true
       ? never
       : {
-          [Status in keyof R & number]: z.infer<ExtractSchema<R[Status]>>
-        }[keyof R & number]
+          [Status in keyof Responses & number]: z.infer<ExtractSchema<Responses[Status]>>
+        }[keyof Responses & number]
 
 /**
- * Type utility for inferring the input types described by a RouteSchema.
+ * Infers the declared, and therefore allowed, response status codes from
+ * Schema.
+ *
+ * If no responses are defined, the type is widened to `number`.
+ *
+ * @template Schema - The RouteSchema from which to infer status codes.
+ * @returns The inferred response status codes as a union of literal
+ *          numbers, or `number`
+ */
+export type InferResponseStatusCodes<Schema extends RouteSchema> =
+  Schema['response'] extends ResponseSchemaMap ? keyof Schema['response'] : number
+
+/**
+ * Type utility for inferring the input and output types described by a
+ * RouteSchema.
  *
  * This is used by TypedMiddleware to produce a parameterized type that
- * coerces the koa context the express the expected types for input and
+ * coerces the koa context to express the expected types for input and
  * output.
  *
  * @template Schema - The RouteSchema from which to infer types.
+ *
+ * @returns The inferred schema types.
  */
 export type InferSchema<Schema extends RouteSchema> = {
-  body: Schema['body'] extends z.ZodTypeAny ? z.infer<Schema['body']> : undefined
-  status: Schema['response'] extends ResponseSchemaMap ? keyof Schema['response'] : number
+  body: Schema['body'] extends AnyZodSchema
+    ? z.infer<Schema['body']>
+    : DefaultKoaContext['request']['body']
+  params: InferSchemaMap<Schema['params'], DefaultKoaContext['params']>
+  query: InferSchemaMap<Schema['query'], DefaultKoaContext['query']>
+  status: InferResponseStatusCodes<Schema>
+  responseBodies: InferResponseBodyUnion<Schema>
 }
-
-/**
- * Describes a parameterized and type-enhanced middleware function
- * according to RouteSchema.
- *
- * The middleware function receives a context object that includes
- * typed properties for params, query, body, request body, response body,
- * state, and cookies, along with the standard DefaultKoaMiddleware
- * properties.
- *
- * @template S - The RouteSchema defining the types for params, query,
- *               body, and response.
- */
-export type TypedMiddleware<
-  Schema extends RouteSchema,
-  CR = ConcreteRouteSchema<Schema>,
-> = (
-  ctx: Koa.ParameterizedContext<
-    Koa.DefaultState,
-    Koa.DefaultContext & {
-      status: WidenNever<InferSchema<CR>['status'], number>
-      query: InferSchemaMap<Schema['query']>
-      params: InferSchemaMap<Schema['params']>
-      request: {
-        body: InferSchema<Schema>['body']
-        query: InferSchemaMap<Schema['query']>
-      }
-      response: Koa.DefaultContext['response'] & {
-        status: WidenNever<InferSchema<CR>['status'], number>
-        body: Schema['response'] extends ResponseSchemaMap
-          ? InferResponseBodyUnion<Schema['response']>
-          : any
-      }
-      body: Schema['response'] extends ResponseSchemaMap
-        ? InferResponseBodyUnion<Schema['response']>
-        : any
-    }
-  >
-) => Promise<void> | void

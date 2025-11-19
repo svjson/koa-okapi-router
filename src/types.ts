@@ -1,5 +1,15 @@
+import Koa from 'koa'
 import KoaRouter from '@koa/router'
 
+import { And, IsExactly } from './type-utilities'
+
+/**
+ * Simplistic baseline Zod schema type aimed to be compatible with both
+ * zod 3 and 4
+ *
+ * Represented members are limited to those required by koa-okapi-router
+ * during either runtime or tests.
+ */
 export type ZodLike = {
   object(shape: Record<string, any>): any
   string(): any
@@ -9,7 +19,7 @@ export type ZodLike = {
 }
 
 import { AnyZodSchema } from './zod-adapter'
-import { TypedMiddleware } from './infer-schema'
+import { InferSchema } from './infer-schema'
 
 /**
  * HTTP methods supported by the router
@@ -28,6 +38,15 @@ export const HTTP_METHODS: HttpMethod[] = [
   'delete',
   'patch',
 ]
+
+/**
+ * Type alias for the default ctx providere by koa/koa-router
+ */
+export type DefaultKoaContext = Koa.ParameterizedContext<
+  Koa.DefaultState,
+  Koa.DefaultContext,
+  unknown
+>
 
 /**
  * Options for configuring the OkapiRouter
@@ -94,6 +113,52 @@ export type OkapiRouter = Record<
    */
   openapiJsonUrl: string
 }
+
+/**
+ * Describes a parameterized and type-enhanced middleware function
+ * according to RouteSchema.
+ *
+ * The middleware function receives a context object that includes
+ * typed properties for params, query, body, request body, response body,
+ * state, and cookies, along with the standard DefaultKoaMiddleware
+ * properties.
+ *
+ * @template Schema - The RouteSchema defining the types for params, query,
+ *                    body, and response.
+ * @template Concrete - The concrete inferred schema. Not intended for
+ *                      parameterization from the outside.
+ */
+export type TypedMiddleware<
+  Schema extends RouteSchema,
+  Concrete extends InferSchema<Schema> = InferSchema<Schema>,
+> =
+  And<
+    IsExactly<Concrete['status'], number>,
+    IsExactly<Concrete['query'], DefaultKoaContext['query']>,
+    IsExactly<Concrete['params'], DefaultKoaContext['params']>,
+    IsExactly<Concrete['body'], DefaultKoaContext['body']>,
+    IsExactly<Concrete['responseBodies'], DefaultKoaContext['body']>
+  > extends true
+    ? (ctx: DefaultKoaContext) => Promise<void> | void
+    : (
+        ctx: Koa.ParameterizedContext<
+          Koa.DefaultState,
+          Koa.DefaultContext & {
+            status: Concrete['status']
+            query: Concrete['query']
+            params: Concrete['params']
+            request: {
+              body: Concrete['body']
+              query: Concrete['query']
+            }
+            response: DefaultKoaContext['response'] & {
+              status: Concrete['status']
+              body: Concrete['responseBodies']
+            }
+            body: Concrete['responseBodies']
+          }
+        >
+      ) => Promise<void> | void
 
 /**
  * Parameters for registering a route, including path, method, and optional schema.

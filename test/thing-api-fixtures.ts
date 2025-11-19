@@ -1,21 +1,15 @@
-import type { PathsObject } from 'openapi3-ts/oas31'
-import { ZodLike } from './types'
+import { AnyZodSchema } from '@src/zod-adapter'
+import { ZodLike } from '@src/types'
 
-export const modelSchemas = (z: ZodLike) => {
-  const ThingSchema = z.object({ id: z.number(), name: z.string(), type: z.string() })
-  const ThingSearchResponseSchema = z.array(ThingSchema)
-
-  return {
-    z,
-    ThingSchema,
-    ThingSearchResponseSchema,
-  }
+interface ModelSchemas {
+  z: ZodLike
+  ThingSchemaWithoutId: AnyZodSchema
+  ThingSchema: AnyZodSchema
+  ThingSearchResponseSchema: any
 }
 
-export type ModelSchemas = ReturnType<typeof modelSchemas>
-
-export const routeSchemas = (schemas: ModelSchemas) => {
-  const { z, ThingSchema, ThingSearchResponseSchema } = schemas
+export const routeSchemas = <MS extends ModelSchemas>(schemas: MS) => {
+  const { z, ThingSchema, ThingSchemaWithoutId, ThingSearchResponseSchema } = schemas
 
   return {
     GetThingsRouteSchema: {
@@ -36,7 +30,7 @@ export const routeSchemas = (schemas: ModelSchemas) => {
       summary: 'Create a new Thing',
       description: 'Create a new Thing and assign it a new identity',
       tags: ['Thing API'],
-      body: ThingSchema.omit({ id: true }),
+      body: ThingSchemaWithoutId,
       response: {
         201: ThingSchema,
       },
@@ -85,9 +79,7 @@ export const routeSchemas = (schemas: ModelSchemas) => {
   }
 }
 
-export type OpenAPISchemaFixture = PathsObject
-
-export const openapiSchemasZodV3: OpenAPISchemaFixture = {
+export const openapiSchemasZodV3 = {
   '/api/things': {
     get: {
       summary: 'The thing',
@@ -497,3 +489,5 @@ export const openapiSchemasZodV4 = {
     },
   },
 }
+
+export type OpenAPISchemaFixture = typeof openapiSchemasZodV3 | typeof openapiSchemasZodV4
