@@ -119,6 +119,30 @@ const makeOpenAPIJsonSuite = <Z extends ZodLike, Routes extends RoutesBase>(
       ])
     })
 
+    it('should produce schema with enum values for optional enum type query parameter', () => {
+      // When
+      const queryParams = collectParameters(
+        zodAdapter,
+        {
+          move: z.optional(schemas.RockPaperScissorsEnum),
+        },
+        'query'
+      )
+
+      // Then
+      expect(queryParams).toMatchObject([
+        {
+          name: 'move',
+          in: 'query',
+          required: false,
+          schema: {
+            type: 'string',
+            enum: ['rock', 'paper', 'scissors'],
+          },
+        },
+      ])
+    })
+
     it('should produce parameter with style-property for string arrays in query', () => {
       // When
       const queryParams = collectParameters(
