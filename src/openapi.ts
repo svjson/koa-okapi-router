@@ -7,7 +7,7 @@ import {
   SchemaWithDescription,
 } from './types'
 import { makeZodAdapter } from './zod-adapter'
-import type { AnyZodSchema, ZodAdapter, ZodTypeAny } from './zod-adapter'
+import type { AnyZodSchema, ZodAdapter } from './zod-adapter'
 
 import type {
   OpenAPIObject,

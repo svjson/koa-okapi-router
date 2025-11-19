@@ -10,11 +10,11 @@ describe('Infer Schema', () => {
      * -------------------------------------------------------------------------
      */
     it('should resolve to `number` if no response are defined', () => {
-      const onlyDescription = {
+      const _routeSchema = {
         description: 'No types',
       } satisfies RouteSchema
 
-      type Status = InferResponseStatusCodes<typeof onlyDescription>
+      type Status = InferResponseStatusCodes<typeof _routeSchema>
 
       expectTypeOf<Status>().toBeNumber()
     })
@@ -24,13 +24,13 @@ describe('Infer Schema', () => {
      * -------------------------------------------------------------------------
      */
     it('should resolve to `number` if no response are defined', () => {
-      const onlyDescription = {
+      const _routeSchema = {
         response: {
           200: z.string(),
         },
       } satisfies RouteSchema
 
-      type Status = InferResponseStatusCodes<typeof onlyDescription>
+      type Status = InferResponseStatusCodes<typeof _routeSchema>
 
       expectTypeOf<Status>().toEqualTypeOf<200>()
     })
@@ -40,7 +40,7 @@ describe('Infer Schema', () => {
      * -------------------------------------------------------------------------
      */
     it('should resolve to union of declared status code numbers', () => {
-      const onlyDescription = {
+      const _routeSchema = {
         response: {
           200: z.string(),
           404: z.null(),
@@ -50,7 +50,7 @@ describe('Infer Schema', () => {
         },
       } satisfies RouteSchema
 
-      type Status = InferResponseStatusCodes<typeof onlyDescription>
+      type Status = InferResponseStatusCodes<typeof _routeSchema>
 
       expectTypeOf<Status>().toEqualTypeOf<200 | 404 | 500>()
     })

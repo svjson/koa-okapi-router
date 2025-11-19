@@ -18,14 +18,14 @@ describe('TypedMiddleware inference', () => {
     })
 
     it('should narrow query parameter to expressed query parameter names and types', () => {
-      const schema = {
+      const _routeSchema = {
         query: {
           q: z.array(z.string()),
           page: z.string(),
         },
       }
 
-      type RouteType = TypedMiddleware<typeof schema>
+      type RouteType = TypedMiddleware<typeof _routeSchema>
 
       type ExpectedType = (
         ctx: Koa.ParameterizedContext<
@@ -58,14 +58,14 @@ describe('TypedMiddleware inference', () => {
     })
 
     it('should narrow path parameters to expressed path parameter names and types', () => {
-      const schema = {
+      const _routeSchema = {
         params: {
           location: z.string(),
           unit: z.string(),
         },
       }
 
-      type RouteType = TypedMiddleware<typeof schema>
+      type RouteType = TypedMiddleware<typeof _routeSchema>
 
       type ExpectedType = (
         ctx: Koa.ParameterizedContext<
@@ -95,7 +95,7 @@ describe('TypedMiddleware inference', () => {
     })
 
     it('should narrow request body', () => {
-      const schema = {
+      const _routeSchema = {
         body: z.object({
           id: z.number(),
           name: z.string(),
@@ -107,7 +107,7 @@ describe('TypedMiddleware inference', () => {
         }),
       }
 
-      type RouteType = TypedMiddleware<typeof schema>
+      type RouteType = TypedMiddleware<typeof _routeSchema>
 
       type ExpectedType = (
         ctx: Koa.ParameterizedContext<
