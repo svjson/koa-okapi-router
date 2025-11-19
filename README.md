@@ -106,10 +106,11 @@ app.use(
 
 ## Version History
 
-### 0.1.2 - Better type-inference - ?
+### 0.1.2 - Better type-inference - 2025-11-19
 
 - Better type-inference for koa context
 - Test suites for type inference
+- Properly handle parameter enums and arrays
 
 ### 0.1.1 - Type-safe Koa context - 2025-11-18
 
