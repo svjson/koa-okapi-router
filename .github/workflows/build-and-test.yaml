@@ -17,7 +17,6 @@ jobs:
         with:
           version: 10.18
           run_install: false
-          cache-dependency-path: ./pnpm-lock.yaml
 
       - name: Setup Node
         uses: actions/setup-node@v4
