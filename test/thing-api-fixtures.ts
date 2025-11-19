@@ -298,7 +298,6 @@ export const openapiSchemasZodV4 = {
           in: 'query',
           required: false,
           schema: {
-            $schema: 'https://json-schema.org/draft/2020-12/schema',
             type: 'string',
           },
         },
@@ -309,7 +308,6 @@ export const openapiSchemasZodV4 = {
           content: {
             'application/json': {
               schema: {
-                $schema: 'https://json-schema.org/draft/2020-12/schema',
                 type: 'array',
                 items: {
                   type: 'object',
@@ -336,7 +334,6 @@ export const openapiSchemasZodV4 = {
         content: {
           'application/json': {
             schema: {
-              $schema: 'https://json-schema.org/draft/2020-12/schema',
               type: 'object',
               properties: {
                 name: { type: 'string' },
@@ -354,7 +351,6 @@ export const openapiSchemasZodV4 = {
           content: {
             'application/json': {
               schema: {
-                $schema: 'https://json-schema.org/draft/2020-12/schema',
                 type: 'object',
                 properties: {
                   id: { type: 'number' },
@@ -381,7 +377,6 @@ export const openapiSchemasZodV4 = {
           name: 'id',
           required: true,
           schema: {
-            $schema: 'https://json-schema.org/draft/2020-12/schema',
             type: 'string',
           },
         },
@@ -392,7 +387,6 @@ export const openapiSchemasZodV4 = {
           content: {
             'application/json': {
               schema: {
-                $schema: 'https://json-schema.org/draft/2020-12/schema',
                 type: 'object',
                 properties: {
                   id: { type: 'number' },
@@ -410,7 +404,6 @@ export const openapiSchemasZodV4 = {
           content: {
             'application/json': {
               schema: {
-                $schema: 'https://json-schema.org/draft/2020-12/schema',
                 type: 'null',
               },
             },
@@ -428,7 +421,6 @@ export const openapiSchemasZodV4 = {
           name: 'id',
           required: true,
           schema: {
-            $schema: 'https://json-schema.org/draft/2020-12/schema',
             type: 'string',
           },
         },
@@ -439,7 +431,6 @@ export const openapiSchemasZodV4 = {
           content: {
             'application/json': {
               schema: {
-                $schema: 'https://json-schema.org/draft/2020-12/schema',
                 type: 'null',
               },
             },
@@ -458,7 +449,6 @@ export const openapiSchemasZodV4 = {
           in: 'path',
           required: true,
           schema: {
-            $schema: 'https://json-schema.org/draft/2020-12/schema',
             type: 'string',
           },
         },
@@ -469,7 +459,6 @@ export const openapiSchemasZodV4 = {
           content: {
             'application/json': {
               schema: {
-                $schema: 'https://json-schema.org/draft/2020-12/schema',
                 type: 'null',
               },
             },
@@ -480,7 +469,6 @@ export const openapiSchemasZodV4 = {
           content: {
             'application/json': {
               schema: {
-                $schema: 'https://json-schema.org/draft/2020-12/schema',
                 type: 'null',
               },
             },

@@ -42,12 +42,9 @@ export const determineZodMajorVersion = (z: any): number => {
     const m = /^(\d+)/.exec(v)
     if (m) return Number(m[1]) >= 4 ? 4 : 3
   }
-  // Reliable feature test: v4 schemas have toJSONSchema()
-  try {
-    if (typeof (z as any).toJSONSchema === 'function') return 4
-  } catch {
-    /* ignore */
-  }
+  // zod v4 schemas have toJSONSchema(). If it's not present, we
+  // safely assume v3
+  if (typeof (z as any).toJSONSchema === 'function') return 4
   return 3
 }
 
@@ -76,10 +73,14 @@ export const makeZodAdapter = (z: any): ZodAdapter => {
        * Attempt to use the built-in toJSONSchema of zod 4, if present
        */
       if (typeof z.toJSONSchema === 'function') {
-        return z.toJSONSchema(schema, {
+        const jsonSchema = z.toJSONSchema(schema, {
           name,
           $refStrategy: 'none',
         })
+        // Get rid of the $schema field produced by zod v4, but that is
+        // not part of the openapi schema
+        delete jsonSchema.$schema
+        return jsonSchema
       }
 
       /**
