@@ -109,6 +109,7 @@ app.use(
 ### UNRELEASED
 
 - Fixed path-parameter syntax in emitted openapi.json
+- Made schema request body expressed as z.null() behave as if undefined
 
 ### 0.1.2 - Better type-inference - 2025-11-19
 

@@ -25,6 +25,10 @@ export interface ZodAdapter {
    */
   isArrayType(schema: ZodTypeAny): boolean
   /**
+   * Query if a zod type is ZodNull
+   */
+  isNull(schema: ZodTypeAny): boolean
+  /**
    * Unwrap the inner type of an optional
    */
   unwrapOptional(schema: ZodTypeAny): ZodTypeAny
@@ -83,6 +87,12 @@ export const makeZodAdapter = (z: any): ZodAdapter => {
       return (
         zodSchema?._def?.typeName === 'ZodArray' ||
         ('def' in zodSchema && (zodSchema?.def as any)?.type === 'array')
+      )
+    },
+    isNull: (zodSchema: ZodTypeAny) => {
+      return (
+        zodSchema?._def?.typeName === 'ZodNull' ||
+        ('def' in zodSchema && (zodSchema?.def as any)?.type === 'null')
       )
     },
     unwrapOptional: (zodSchema: ZodTypeAny): ZodTypeAny => {

@@ -27,6 +27,7 @@ const RockPaperScissorsEnumV4 = z4.enum(['rock', 'paper', 'scissors'])
 
 type RoutesBase = {
   GetThingsRouteSchema: any
+  GetThingsRouteSchemaWithNullBody: any
   PostThingRouteSchema: any
   GetThingByIdRouteSchema: any
   PutThingAtIdRouteSchema: any
@@ -204,6 +205,30 @@ const makeOpenAPIJsonSuite = <Z extends ZodLike, Routes extends RoutesBase>(
     it('should build an openapi.json from a single route schema', () => {
       // Given
       const schema: RouteSchema = routes.GetThingsRouteSchema
+
+      // When
+      const openapiDocs = buildOpenApiJson(
+        { 'get /api/things': schema },
+        {
+          openapi: {
+            info: { title: 'API', version: '1.0.0' },
+            jsonUrl: '/openapi.json',
+          },
+          schema: { zod: z },
+        }
+      )
+
+      // Then
+      expect(openapiDocs).toEqual({
+        openapi: '3.1.0',
+        info: { title: 'API', version: '1.0.0' },
+        paths: { '/api/things': { get: openapiSchemas['/api/things'].get } },
+      })
+    })
+
+    it('should build an openapi.json from a get route and ignore zod-null as body', () => {
+      // Given
+      const schema: RouteSchema = routes.GetThingsRouteSchemaWithNullBody
 
       // When
       const openapiDocs = buildOpenApiJson(

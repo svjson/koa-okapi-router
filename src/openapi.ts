@@ -151,11 +151,13 @@ export const buildOpenApiJson = (
     const [method, path] = key.split(' ')
     const schema = schemas[key]
 
-    const requestBody: any = schema.body
-      ? {
-          requestBody: toContent(zod, schema.body, 'Request Body'),
-        }
-      : {}
+    const requestBody: any =
+      schema.body &&
+      !zod.isNull('schema' in schema.body ? schema.body.schema : schema.body)
+        ? {
+            requestBody: toContent(zod, schema.body, 'Request Body'),
+          }
+        : {}
 
     const responses = Object.entries(schema.response ?? {}).reduce(
       (acc, [status, respDef]) => {

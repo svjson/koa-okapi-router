@@ -27,6 +27,21 @@ export const routeSchemas = <MS extends ModelSchemas>(schemas: MS) => {
         200: ThingSearchResponseSchema,
       },
     },
+    GetThingsRouteSchemaWithNullBody: {
+      summary: 'The thing',
+      description: 'Returns the THING',
+      tags: ['Thing API'],
+      body: z.null(),
+      query: {
+        type: {
+          description: 'Filter by type',
+          schema: z.string().optional(),
+        },
+      },
+      response: {
+        200: ThingSearchResponseSchema,
+      },
+    },
     PostThingRouteSchema: {
       summary: 'Create a new Thing',
       description: 'Create a new Thing and assign it a new identity',
