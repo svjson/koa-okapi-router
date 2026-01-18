@@ -5,7 +5,7 @@ import KoaRouter from '@koa/router'
 import { koaSwagger } from 'koa2-swagger-ui'
 
 import type { RouteSchema, ZodLike } from '@src/types'
-import { buildOpenApiJson, collectParameters } from '@src/openapi'
+import { buildOpenApiJson, collectParameters, translatePathPattern } from '@src/openapi'
 import { makeZodAdapter } from '@src/zod-adapter'
 
 import { koaFixture } from './http-fixtures'
@@ -276,7 +276,7 @@ const makeOpenAPIJsonSuite = <Z extends ZodLike, Routes extends RoutesBase>(
         openapi: '3.1.0',
         info: { title: 'Thing API', version: '1.1.0' },
         paths: {
-          '/api/things/:id': openapiSchemas['/api/things/:id'],
+          '/api/things/{id}': openapiSchemas['/api/things/:id'],
         },
       })
     })
@@ -284,6 +284,21 @@ const makeOpenAPIJsonSuite = <Z extends ZodLike, Routes extends RoutesBase>(
 }
 
 describe('OpenAPI', () => {
+  describe('translatePathPattern', () => {
+    it.each([
+      { koa: '/api/endpoint', openapi: '/api/endpoint' },
+      { koa: '/entity/:id', openapi: '/entity/{id}' },
+      { koa: '/entity/:id/', openapi: '/entity/{id}/' },
+      { koa: '/entity/:id/children/:index', openapi: '/entity/{id}/children/{index}' },
+      { koa: '/:a/:b/:c', openapi: '/{a}/{b}/{c}' },
+      { koa: '/users/:user_id', openapi: '/users/{user_id}' },
+      { koa: '(.*)/contacts/:contactCode', openapi: '(.*)/contacts/{contactCode}' },
+      { koa: '/v1/:entity2/:id3', openapi: '/v1/{entity2}/{id3}' },
+    ])('should translate "$koa" to "$openapi"', ({ koa, openapi }) => {
+      expect(translatePathPattern(koa)).toEqual(openapi)
+    })
+  })
+
   describe('zod 3', () => {
     const schemas = {
       z: z3,

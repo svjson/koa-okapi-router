@@ -106,6 +106,10 @@ app.use(
 
 ## Version History
 
+### UNRELEASED
+
+- Fixed path-parameter syntax in emitted openapi.json
+
 ### 0.1.2 - Better type-inference - 2025-11-19
 
 - Better type-inference for koa context

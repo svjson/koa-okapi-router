@@ -18,6 +18,21 @@ import type {
 } from 'openapi3-ts/oas31'
 
 /**
+ * Translate a uri path pattern as expressed for KoaRouter to the
+ * format expected by openapi.json.
+ *
+ * In practice, this means replacing path-parameters expressed as ':param'
+ * with the equivalent '{param}' form.
+ *
+ * @param path - The KoaRouter path pattern.
+ *
+ * @returns The OpenAPI-compatible path pattern.
+ */
+export const translatePathPattern = (path: string) => {
+  return path.replace(/:([A-Za-z0-9_]+)/g, '{$1}')
+}
+
+/**
  * Collect path or query parameters and produce openapi definitions
  * for these.
  *
@@ -155,8 +170,10 @@ export const buildOpenApiJson = (
       ...collectParameters(zod, schema.query, 'query'),
     ]
 
-    paths[path] = {
-      ...(paths[path] || {}),
+    const openApiPath = translatePathPattern(path)
+
+    paths[openApiPath] = {
+      ...(paths[openApiPath] || {}),
       [method.toLowerCase()]: {
         summary: schema.summary,
         description: schema.description,
