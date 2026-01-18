@@ -106,7 +106,7 @@ app.use(
 
 ## Version History
 
-### UNRELEASED
+### 0.1.3 - OpenAPI schema fixes - 2026-01-18
 
 - Fixed path-parameter syntax in emitted openapi.json
 - Made schema request body expressed as z.null() behave as if undefined
