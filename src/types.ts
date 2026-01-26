@@ -78,6 +78,15 @@ export type OkapiRouter = Record<
   ) => void
 > & {
   /**
+   * Add an entity definition for the purpose of OpenAPI schema generation.
+   *
+   * @param entityName - The name of the entity.
+   * @param schema - The Zod schema defining the entity.
+   *
+   * @returns void
+   */
+  addEntity: (entityName: string, schema: DescribedSchema) => void
+  /**
    * Returns router middleware which dispatches a route matching the request.
    *
    * Equivalent to `KoaRouterInstance.routes()`
@@ -191,6 +200,15 @@ export interface SchemaWithDescription {
  * Schema that may include a description alongside the Zod schema.
  */
 export type DescribedSchema = SchemaWithDescription | AnyZodSchema
+
+/**
+ * Component/Entity Schema
+ */
+export type EntitySchema =
+  | (SchemaWithDescription & {
+      name: string
+    })
+  | AnyZodSchema
 
 /**
  * Schema that describes the path parameters of a route.

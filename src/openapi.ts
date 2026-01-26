@@ -1,6 +1,7 @@
 import { STATUS_CODES } from 'node:http'
 import {
   DescribedSchema,
+  EntitySchema,
   OkapiRouterOptions,
   PathParameterMap,
   RouteSchema,
@@ -15,6 +16,7 @@ import type {
   ParameterObject,
   PathItemObject,
   ReferenceObject,
+  SchemaObject,
 } from 'openapi3-ts/oas31'
 
 /**
@@ -88,7 +90,7 @@ const unwrapOptionals = (schema: any): any => {
  * @returns A SchemaWithDescription object.
  */
 const normalizeDescribedSchema = (
-  typeDesc: DescribedSchema | undefined,
+  typeDesc: DescribedSchema | EntitySchema | undefined,
   defaultDescription: string = ''
 ): SchemaWithDescription => {
   if (
@@ -136,16 +138,19 @@ const toContent = (
  * Builds an OpenAPI JSON document from the provided route schemas and options.
  *
  * @param schemas - A record of route schemas keyed by "METHOD /path".
+ * @param entities - A record of component/entity schemas keyed by canonical name.
  * @param opts - Options for the OpenAPI document, including API info and
  *               Zod configuration.
  * @returns An OpenAPIObject representing the API documentation.
  */
 export const buildOpenApiJson = (
   schemas: Record<string, RouteSchema>,
+  entities: Record<string, EntitySchema>,
   opts: OkapiRouterOptions
 ): OpenAPIObject => {
   const zod: ZodAdapter = makeZodAdapter(opts.schema.zod)
   const paths: Record<string, PathItemObject> = {}
+  const componentSchemas: Record<string, SchemaObject | ReferenceObject> = {}
 
   for (const key of Object.keys(schemas)) {
     const [method, path] = key.split(' ')
@@ -187,9 +192,18 @@ export const buildOpenApiJson = (
     }
   }
 
+  for (const key of Object.keys(entities)) {
+    componentSchemas[key] = zod.toJsonSchema(
+      normalizeDescribedSchema(entities[key], '').schema
+    )
+  }
+
   return {
     openapi: '3.1.0',
     info: opts.openapi.info,
     paths,
+    ...(Object.keys(componentSchemas).length
+      ? { components: { schemas: componentSchemas } }
+      : {}),
   }
 }

@@ -11,6 +11,9 @@ import { makeZodAdapter } from '@src/zod-adapter'
 import { koaFixture } from './http-fixtures'
 import {
   ModelSchemas,
+  ObjectSchemas,
+  openapiObjectsZodV3,
+  openapiObjectsZodV4,
   OpenAPISchemaFixture,
   openapiSchemasZodV3,
   openapiSchemasZodV4,
@@ -92,6 +95,7 @@ const makeOpenAPIJsonSuite = <Z extends ZodLike, Routes extends RoutesBase>(
   z: Z,
   openapiSchemas: OpenAPISchemaFixture,
   schemas: ModelSchemas,
+  objects: ObjectSchemas,
   routes: Routes
 ) => {
   describe('collectParameters', () => {
@@ -209,6 +213,7 @@ const makeOpenAPIJsonSuite = <Z extends ZodLike, Routes extends RoutesBase>(
       // When
       const openapiDocs = buildOpenApiJson(
         { 'get /api/things': schema },
+        {},
         {
           openapi: {
             info: { title: 'API', version: '1.0.0' },
@@ -233,6 +238,7 @@ const makeOpenAPIJsonSuite = <Z extends ZodLike, Routes extends RoutesBase>(
       // When
       const openapiDocs = buildOpenApiJson(
         { 'get /api/things': schema },
+        {},
         {
           openapi: {
             info: { title: 'API', version: '1.0.0' },
@@ -257,6 +263,7 @@ const makeOpenAPIJsonSuite = <Z extends ZodLike, Routes extends RoutesBase>(
       // When
       const openapiDocs = buildOpenApiJson(
         { 'post /api/things': schema },
+        {},
         {
           openapi: {
             info: { title: 'API', version: '1.0.0' },
@@ -287,6 +294,7 @@ const makeOpenAPIJsonSuite = <Z extends ZodLike, Routes extends RoutesBase>(
           'put /api/things/:id': putSchema,
           'delete /api/things/:id': deleteSchema,
         },
+        {},
         {
           openapi: {
             info: { title: 'Thing API', version: '1.1.0' },
@@ -302,6 +310,33 @@ const makeOpenAPIJsonSuite = <Z extends ZodLike, Routes extends RoutesBase>(
         info: { title: 'Thing API', version: '1.1.0' },
         paths: {
           '/api/things/{id}': openapiSchemas['/api/things/:id'],
+        },
+      })
+    })
+
+    it('should build an openapi.json from component entity schema only', () => {
+      // When
+      const openapiDocs = buildOpenApiJson(
+        {},
+        { Thing: schemas.ThingSchema },
+        {
+          openapi: {
+            info: { title: 'Thing API', version: '2.3.4' },
+            jsonUrl: '/openapi.json',
+          },
+          schema: { zod: z },
+        }
+      )
+
+      // Then
+      expect(openapiDocs).toEqual({
+        openapi: '3.1.0',
+        info: { title: 'Thing API', version: '2.3.4' },
+        paths: {},
+        components: {
+          schemas: {
+            Thing: objects.Thing,
+          },
         },
       })
     })
@@ -333,7 +368,13 @@ describe('OpenAPI', () => {
       RockPaperScissorsEnum: RockPaperScissorsEnumV3,
     }
     makeSwaggerUISuite(z3, openapiSchemasZodV3, routeSchemas(schemas))
-    makeOpenAPIJsonSuite(z3, openapiSchemasZodV3, schemas, routeSchemas(schemas))
+    makeOpenAPIJsonSuite(
+      z3,
+      openapiSchemasZodV3,
+      schemas,
+      openapiObjectsZodV3,
+      routeSchemas(schemas)
+    )
   })
   describe('zod 4', () => {
     const schemas = {
@@ -344,6 +385,12 @@ describe('OpenAPI', () => {
       RockPaperScissorsEnum: RockPaperScissorsEnumV4,
     }
     makeSwaggerUISuite(z4, openapiSchemasZodV4, routeSchemas(schemas))
-    makeOpenAPIJsonSuite(z4, openapiSchemasZodV4, schemas, routeSchemas(schemas))
+    makeOpenAPIJsonSuite(
+      z4,
+      openapiSchemasZodV4,
+      schemas,
+      openapiObjectsZodV4,
+      routeSchemas(schemas)
+    )
   })
 })

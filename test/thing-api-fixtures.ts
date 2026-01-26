@@ -9,6 +9,10 @@ export interface ModelSchemas {
   RockPaperScissorsEnum: AnyZodSchema
 }
 
+export interface ObjectSchemas {
+  Thing: any
+}
+
 export const routeSchemas = <MS extends ModelSchemas>(schemas: MS) => {
   const { z, ThingSchema, ThingSchemaWithoutId, ThingSearchResponseSchema } = schemas
 
@@ -95,6 +99,21 @@ export const routeSchemas = <MS extends ModelSchemas>(schemas: MS) => {
   }
 }
 
+export const SchemaObject_v3_Thing = {
+  type: 'object',
+  properties: {
+    id: { type: 'number' },
+    name: { type: 'string' },
+    type: { type: 'string' },
+  },
+  required: ['id', 'name', 'type'],
+  additionalProperties: false,
+}
+
+export const openapiObjectsZodV3 = {
+  Thing: SchemaObject_v3_Thing,
+}
+
 export const openapiSchemasZodV3 = {
   '/api/things': {
     get: {
@@ -119,16 +138,7 @@ export const openapiSchemasZodV3 = {
             'application/json': {
               schema: {
                 type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    id: { type: 'number' },
-                    name: { type: 'string' },
-                    type: { type: 'string' },
-                  },
-                  required: ['id', 'name', 'type'],
-                  additionalProperties: false,
-                },
+                items: SchemaObject_v3_Thing,
               },
             },
           },
@@ -293,6 +303,21 @@ export const openapiSchemasZodV3 = {
   },
 }
 
+export const SchemaObject_v4_Thing = {
+  type: 'object',
+  properties: {
+    id: { type: 'number' },
+    name: { type: 'string' },
+    type: { type: 'string' },
+  },
+  required: ['id', 'name', 'type'],
+  additionalProperties: false,
+}
+
+export const openapiObjectsZodV4 = {
+  Thing: SchemaObject_v4_Thing,
+}
+
 export const openapiSchemasZodV4 = {
   '/api/things': {
     get: {
@@ -317,16 +342,7 @@ export const openapiSchemasZodV4 = {
             'application/json': {
               schema: {
                 type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    id: { type: 'number' },
-                    name: { type: 'string' },
-                    type: { type: 'string' },
-                  },
-                  required: ['id', 'name', 'type'],
-                  additionalProperties: false,
-                },
+                items: SchemaObject_v4_Thing,
               },
             },
           },

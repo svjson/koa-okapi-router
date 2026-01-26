@@ -11,6 +11,7 @@ import type {
   RouteSchema,
   OkapiRegisterParams,
   TypedMiddleware,
+  EntitySchema,
 } from './types'
 import { buildOpenApiJson } from './openapi'
 import z from 'zod'
@@ -59,9 +60,24 @@ export const makeOkapiRouter = (
    * Globally registered schemas
    */
   const schemas: Record<string, RouteSchema> = {}
+  /**
+   * Globally registered entity definitions
+   */
+  const entities: Record<string, EntitySchema> = {}
 
   /**
-   * Bare-ones register function.
+   * Add an entity/component schema for inclusion in openapi.json
+   * generation.
+   *
+   * @param name - The canonical name of the entity.
+   * @param entity - The EntitySchema defining the entity.
+   */
+  function addEntity(name: string, entity: EntitySchema) {
+    entities[name] = entity
+  }
+
+  /**
+   * Bare-bones register function.
    *
    * All method-specific methods work as syntactic sugar over this
    * one function for registering routes.
@@ -106,6 +122,7 @@ export const makeOkapiRouter = (
    * Bind together and return an object fulfilling the OkapiRouter interface
    */
   return {
+    addEntity,
     ...router,
     register,
     routes: function () {
@@ -113,7 +130,7 @@ export const makeOkapiRouter = (
     },
     openapiJsonUrl: _opts.openapi.jsonUrl,
     openapiJson: () => {
-      return buildOpenApiJson(schemas, _opts)
+      return buildOpenApiJson(schemas, entities, _opts)
     },
     allowedMethods: function () {
       return koaRouter.allowedMethods()
