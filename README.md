@@ -103,31 +103,9 @@ app.use(
 )
 ```
 
-
 ## Version History
 
-### 0.1.3 - OpenAPI schema fixes - 2026-01-18
-
-- Fixed path-parameter syntax in emitted openapi.json
-- Made schema request body expressed as z.null() behave as if undefined
-
-### 0.1.2 - Better type-inference - 2025-11-19
-
-- Better type-inference for koa context
-- Test suites for type inference
-- Properly handle parameter enums and arrays
-
-### 0.1.1 - Type-safe Koa context - 2025-11-18
-
-- Infer types from declared route schemas
-- Parameterize route handling middleware
-
-### 0.1.0 - Initial Release - 2025-11-12
-
-- Basic Router abstraction
-- Schema declaration in router methods
-- `openapi.json` generation
-
+See [CHANGELOG.md](./CHANGELOG.md) for version history and unreleased changes.
 
 ## License
 
