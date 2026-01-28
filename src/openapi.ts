@@ -49,7 +49,7 @@ export const collectParameters = (
 ) =>
   Object.entries(coll ?? {}).map(
     ([name, typeDesc]) => {
-      const { schema, description } = normalizeDescribedSchema(typeDesc)
+      const { schema, description } = normalizeSchema(typeDesc)
       return {
         name,
         ...(description ? { description } : {}),
@@ -82,29 +82,31 @@ const unwrapOptionals = (schema: any): any => {
 }
 
 /**
+ * Test and narrow Described schema to SchemaWithDescription if applicable
+ *
+ * @param desc - The DescribedSchema to test.
+ */
+const isSchemaDescription = (desc: DescribedSchema): desc is SchemaWithDescription => {
+  return typeof desc === 'object' && desc !== null && 'schema' in desc
+}
+
+/**
  * Normalize a DescribedSchema instance to the SchemaWithDescription shape
  *
- * @param typeDesc - The DescribedSchema to normalize.
+ * @param desc - The DescribedSchema to normalize.
  * @param defaultDescription - A default description to use if typeDesc is
  *                             a plain zod type
  * @returns A SchemaWithDescription object.
  */
-const normalizeDescribedSchema = (
-  typeDesc: DescribedSchema | EntitySchema | undefined,
-  defaultDescription: string = ''
-): SchemaWithDescription => {
-  if (
-    typeDesc &&
-    typeof typeDesc === 'object' &&
-    'description' in typeDesc &&
-    typeof typeDesc.description === 'string'
-  ) {
-    return typeDesc
+const normalizeSchema = (desc?: DescribedSchema, defaultDescription?: string) => {
+  if (!desc) return undefined
+  if (isSchemaDescription(desc)) {
+    return desc
   }
 
   return {
-    description: defaultDescription,
-    schema: typeDesc as AnyZodSchema,
+    ...(defaultDescription ? { description: defaultDescription } : {}),
+    schema: desc as AnyZodSchema,
   }
 }
 
@@ -119,16 +121,20 @@ const normalizeDescribedSchema = (
  */
 const toContent = (
   zod: ZodAdapter,
-  typeDesc: DescribedSchema,
+  schema: SchemaWithDescription,
   defaultDescription: string = ''
 ) => {
-  const schemaDesc = normalizeDescribedSchema(typeDesc, defaultDescription)
+  const description = schema.description ?? defaultDescription
 
   return {
-    description: schemaDesc.description,
+    description: description,
     content: {
       'application/json': {
-        schema: zod.toJsonSchema(schemaDesc.schema),
+        schema: schema.name
+          ? {
+              $ref: `#/components/schemas/${schema.name}`,
+            }
+          : zod.toJsonSchema(schema.schema),
       },
     },
   }
@@ -152,21 +158,37 @@ export const buildOpenApiJson = (
   const paths: Record<string, PathItemObject> = {}
   const componentSchemas: Record<string, SchemaObject | ReferenceObject> = {}
 
+  const buildContent = (schema: SchemaWithDescription) => {
+    if (schema.name) {
+      componentSchemas[schema.name] = zod.toJsonSchema(schema.schema)
+    }
+
+    return toContent(zod, schema)
+  }
+
   for (const key of Object.keys(schemas)) {
     const [method, path] = key.split(' ')
     const schema = schemas[key]
+    const { summary, description, tags } = schema
+    const openApiPath = translatePathPattern(path)
 
-    const requestBody: any =
-      schema.body &&
-      !zod.isNull('schema' in schema.body ? schema.body.schema : schema.body)
-        ? {
-            requestBody: toContent(zod, schema.body, 'Request Body'),
-          }
-        : {}
+    const pathItem = (paths[openApiPath] ??= {})
+    const routeItem = (pathItem[method.toLowerCase()] ??= {
+      ...(schema.summary ? { summary } : {}),
+      ...(schema.description ? { description } : {}),
+      ...(schema.tags ? { tags } : {}),
+    })
 
-    const responses = Object.entries(schema.response ?? {}).reduce(
+    const bodySchema = normalizeSchema(schema.body, 'Request Body')
+    if (bodySchema && !zod.isNull(bodySchema.schema)) {
+      routeItem.requestBody = buildContent(bodySchema)
+    }
+
+    routeItem.responses = Object.entries(schema.response ?? {}).reduce(
       (acc, [status, respDef]) => {
-        acc[status] = toContent(zod, respDef, STATUS_CODES[status] ?? '')
+        const responseSchema = normalizeSchema(respDef, STATUS_CODES[status])
+        acc[status] = buildContent(responseSchema)
+
         return acc
       },
       {} as Record<string, any>
@@ -176,26 +198,13 @@ export const buildOpenApiJson = (
       ...collectParameters(zod, schema.params, 'path'),
       ...collectParameters(zod, schema.query, 'query'),
     ]
-
-    const openApiPath = translatePathPattern(path)
-
-    paths[openApiPath] = {
-      ...(paths[openApiPath] || {}),
-      [method.toLowerCase()]: {
-        summary: schema.summary,
-        description: schema.description,
-        tags: schema.tags,
-        ...(parameters.length > 0 ? { parameters } : {}),
-        ...requestBody,
-        responses,
-      },
+    if (parameters.length) {
+      routeItem.parameters = parameters
     }
   }
 
   for (const key of Object.keys(entities)) {
-    componentSchemas[key] = zod.toJsonSchema(
-      normalizeDescribedSchema(entities[key], '').schema
-    )
+    componentSchemas[key] = zod.toJsonSchema(entities[key])
   }
 
   return {

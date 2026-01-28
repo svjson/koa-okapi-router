@@ -206,7 +206,18 @@ export interface OkapiRegisterParams<Schema extends RouteSchema> {
  * Schema with an associated description for documentation purposes
  */
 export interface SchemaWithDescription {
-  description: string
+  /**
+   * Payload entity/component name.
+   *
+   * If this optional field is provided, the content schema will be included
+   * as a component when the openapi.json is generated, and the inline schema
+   * on the route will be generated as a $ref to this component schema.
+   */
+  name?: string
+  /**
+   * Optional description of the content schema
+   */
+  description?: string
   schema: AnyZodSchema
 }
 
@@ -218,11 +229,7 @@ export type DescribedSchema = SchemaWithDescription | AnyZodSchema
 /**
  * Component/Entity Schema
  */
-export type EntitySchema =
-  | (SchemaWithDescription & {
-      name: string
-    })
-  | AnyZodSchema
+export type EntitySchema = AnyZodSchema
 
 /**
  * Schema that describes the path parameters of a route.

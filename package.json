@@ -23,7 +23,8 @@
     "build": "tsup",
     "lint": "eslint",
     "prettier": "prettier -c ./src ./test",
-    "test": "vitest run"
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
     "@koa/router": "^12.0.0",

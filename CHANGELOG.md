@@ -4,7 +4,8 @@
 ## [UNRELEASED]
 
 ### Added
-- register component schemas/entities for OpenAPI schemas with `addEntity`/`addEntities`.
+- Feature: Allow registering component schemas/entities for OpenAPI schemas with `addEntity`/`addEntities`.
+- Feature: Allow inline definition of component schemas/entities in route schemas
 
 ## [0.1.3] - 2026-01-18
 
