@@ -21,6 +21,7 @@ export type ZodLike = {
 
 import { AnyZodSchema } from './zod-adapter'
 import { InferSchema } from './infer-schema'
+import { OpenAPIObject } from 'openapi3-ts/oas31'
 
 /**
  * HTTP methods supported by the router
@@ -128,7 +129,22 @@ export type OkapiRouter = Record<
    *
    * @returns An object representing the OpenAPI JSON document.
    */
-  openapiJson: () => Object
+  openapiJson: () => OpenAPIObject
+
+  /**
+   * Generates a new OpenAPI JSON document by extending an existing document
+   * with the OpenAPI documentation generated from the routes and metadata of
+   * this router instance.
+   *
+   * The output preserves `openapi` and `info` from the input when available,
+   * and generates them otherwise.
+   *
+   * @param openApiJson - The existing OpenAPI JSON document to extend,
+   *                      either as an object or a JSON string.
+   *
+   * @returns The extended OpenAPI JSON document.
+   */
+  extendOpenApiJson: (openApiJson: OpenAPIObject | string) => OpenAPIObject
 
   /**
    * The URL path where the OpenAPI JSON document can be accessed.

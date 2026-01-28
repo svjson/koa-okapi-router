@@ -6,6 +6,7 @@
 ### Added
 - Feature: Allow registering component schemas/entities for OpenAPI schemas with `addEntity`/`addEntities`.
 - Feature: Allow inline definition of component schemas/entities in route schemas
+- Feature: Extend a foreign OpenAPI Json Schema with the schema generated from an OkapiRouter
 
 ### Changed
 - Changed managed loading of zod-to-json-schema to rely on process.cwd() of the consuming package rather than broken __dirname/import.meta.url gymnastics

@@ -13,8 +13,9 @@ import type {
   TypedMiddleware,
   EntitySchema,
 } from './types'
-import { buildOpenApiJson } from './openapi'
+import { buildOpenApiJson, extendOpenApiJson } from './openapi'
 import z from 'zod'
+import { OpenAPIObject } from 'openapi3-ts/oas31'
 
 export const materializeOptions = (
   opts: DeepPartial<OkapiRouterOptions>
@@ -130,14 +131,17 @@ export const makeOkapiRouter = (
     addEntities,
     ...router,
     register,
-    routes: function () {
+    routes() {
       return koaRouter.routes()
     },
     openapiJsonUrl: _opts.openapi.jsonUrl,
-    openapiJson: () => {
+    openapiJson() {
       return buildOpenApiJson(schemas, entities, _opts)
     },
-    allowedMethods: function () {
+    extendOpenApiJson(input: OpenAPIObject | string) {
+      return extendOpenApiJson(input, this.openapiJson())
+    },
+    allowedMethods() {
       return koaRouter.allowedMethods()
     },
   } as OkapiRouter

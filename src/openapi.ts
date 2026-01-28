@@ -216,3 +216,42 @@ export const buildOpenApiJson = (
       : {}),
   }
 }
+
+/**
+ * Extends a base OpenAPI JSON document with additional paths and components.
+ *
+ * @param base - The base OpenAPI document, either as an object or a JSON string.
+ * @param additional - The additional OpenAPI document to merge into the base.
+ *
+ * @returns The merged OpenAPIObject.
+ */
+export const extendOpenApiJson = (
+  base: OpenAPIObject | string,
+  additional: OpenAPIObject
+): OpenAPIObject => {
+  const _base = typeof base === 'string' ? (JSON.parse(base) as OpenAPIObject) : base
+
+  const result: OpenAPIObject = {
+    ..._base,
+    openapi: _base.openapi ?? additional.openapi,
+    info: _base.info ?? additional.info,
+    paths: {
+      ...(_base.paths ?? {}),
+      ...(additional.paths ?? {}),
+    },
+    components: {
+      ...(_base.components ?? {}),
+    },
+  }
+
+  const cmpSchemas = {
+    ...(result.components.schemas ?? {}),
+    ...(additional.components?.schemas ?? {}),
+  }
+
+  if (Object.keys(cmpSchemas).length) {
+    result.components.schemas = cmpSchemas
+  }
+
+  return result
+}
