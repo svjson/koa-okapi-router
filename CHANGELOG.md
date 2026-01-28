@@ -1,6 +1,11 @@
 
 # Changelog
 
+## [UNRELEASED]
+
+### Added
+- register component schemas/entities for OpenAPI schemas with `addEntity`/`addEntities`.
+
 ## [0.1.3] - 2026-01-18
 
 OpenAPI schema fixes

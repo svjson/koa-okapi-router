@@ -72,8 +72,12 @@ export const makeOkapiRouter = (
    * @param name - The canonical name of the entity.
    * @param entity - The EntitySchema defining the entity.
    */
-  function addEntity(name: string, entity: EntitySchema) {
+  const addEntity = (name: string, entity: EntitySchema) => {
     entities[name] = entity
+  }
+
+  const addEntities = (entityMap: Record<string, EntitySchema>) => {
+    Object.assign(entities, entityMap)
   }
 
   /**
@@ -82,10 +86,10 @@ export const makeOkapiRouter = (
    * All method-specific methods work as syntactic sugar over this
    * one function for registering routes.
    */
-  function register<Schema extends RouteSchema>(
+  const register = <Schema extends RouteSchema>(
     { path, method, schema }: OkapiRegisterParams<Schema>,
     middleware: any
-  ) {
+  ) => {
     koaRouter.register(path, [method], middleware)
     if (schema) {
       schemas[`${method} ${path}`] = schema
@@ -123,6 +127,7 @@ export const makeOkapiRouter = (
    */
   return {
     addEntity,
+    addEntities,
     ...router,
     register,
     routes: function () {

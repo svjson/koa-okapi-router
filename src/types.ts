@@ -85,7 +85,14 @@ export type OkapiRouter = Record<
    *
    * @returns void
    */
-  addEntity: (entityName: string, schema: DescribedSchema) => void
+  addEntity: (entityName: string, schema: EntitySchema) => void
+
+  /**
+   * Add a set of entity definitions to the router for the purpose of OpenAPI
+   * schema generation
+   */
+  addEntities: (entities: Record<string, EntitySchema>) => void
+
   /**
    * Returns router middleware which dispatches a route matching the request.
    *
@@ -94,28 +101,35 @@ export type OkapiRouter = Record<
    * @returns Koa middleware function
    */
   routes: () => ReturnType<KoaRouter['routes']>
+
   /**
-   * Returns router middleware which responds to OPTIONS requests and sets `Allow` header.
+   * Returns router middleware which responds to OPTIONS requests and sets
+   * `Allow` header.
    *
    * Equivalent to `KoaRouterInstance.allowedMethods()`
    *
    * @returns Koa middleware function
    */
   allowedMethods: () => ReturnType<KoaRouter['allowedMethods']>
+
   /**
    * Registers a route with the given parameters and middleware.
-   * @param params - Parameters for the route including path, method, and optional schema.
+   *
+   * @param params - Parameters for the route including path, method, and
+   *                 optional schema.
    */
   register: (
     params: OkapiRegisterParams<RouteSchema>,
     middleware: TypedMiddleware<RouteSchema>
   ) => void
+
   /**
    * Generates an OpenAPI JSON document for the registered routes.
    *
    * @returns An object representing the OpenAPI JSON document.
    */
   openapiJson: () => Object
+
   /**
    * The URL path where the OpenAPI JSON document can be accessed.
    *
