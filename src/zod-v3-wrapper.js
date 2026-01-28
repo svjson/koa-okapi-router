@@ -1,24 +1,13 @@
+import path from 'node:path'
 import { createRequire } from 'node:module'
 import Module from 'node:module'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-
-// Fallbacks for CJS builds where import.meta.url is undefined
-const __filename =
-  typeof import.meta !== 'undefined' && import.meta.url
-    ? fileURLToPath(import.meta.url)
-    : __filename
-const __dirname = path.dirname(__filename)
 
 /**
  * Loads zod-to-json-schema so that it uses the provided Zod instance.
  * Works with both ESM and CJS builds of the converter.
  */
 export function bindConverter(z) {
-  const req =
-    typeof import.meta !== 'undefined' && import.meta.url
-      ? createRequire(import.meta.url)
-      : createRequire(__dirname)
+  const req = createRequire(path.join(process.cwd(), '__fake__.js'))
 
   const converterPath = req.resolve('zod-to-json-schema')
   const realRequire = createRequire(converterPath)
