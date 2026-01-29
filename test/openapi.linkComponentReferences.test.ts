@@ -77,7 +77,7 @@ const actorSchema: SchemaObject = {
 }
 
 describe('linkSchema', () => {
-  it('should replace array item with ref to registered component', () => {
+  it('should link array items schema', () => {
     // Given
     const schemas = [['UserRole', userSchema]] satisfies CmpTuple[]
 
@@ -96,6 +96,49 @@ describe('linkSchema', () => {
         $ref: '#/components/schemas/UserRole',
       },
     })
+  })
+
+  it.each([
+    {
+      case: 'array of string',
+      items: {
+        type: 'string',
+      },
+    },
+    {
+      case: 'array of integer',
+      items: {
+        type: 'integer',
+      },
+    },
+    {
+      case: 'array of integer with default min/max',
+      items: {
+        type: 'integer',
+        maximum: 9007199254740991,
+        minimum: -9007199254740991,
+      },
+    },
+  ] as { case: string; items: SchemaObject }[])('should not link $case', ({ items }) => {
+    // Given
+    const schemas: CmpTuple[] = [
+      ['String', { type: 'string' }],
+      ['Integer', { type: 'integer' }],
+      [
+        'IntegerWithSafeMinMax',
+        { type: 'integer', maximum: 9007199254740991, minimum: -9007199254740991 },
+      ],
+    ]
+    const arraySchema: SchemaObject = {
+      type: 'array',
+      items: items,
+    }
+
+    // When
+    const result = linkSchema(structuredClone(arraySchema), schemas)
+
+    // Then
+    expect(result).toEqual(arraySchema)
   })
 })
 

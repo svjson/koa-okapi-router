@@ -125,6 +125,12 @@ export type CmpTuple = [string, SchemaObject | ReferenceObject]
  */
 const PRIMITIVES = ['integer', 'number', 'string', 'boolean', 'null']
 
+const SAFE_MIN_MAX_INTEGER: SchemaObject = {
+  type: 'integer',
+  minimum: Number.MIN_SAFE_INTEGER,
+  maximum: Number.MAX_SAFE_INTEGER,
+}
+
 /**
  * Test if a SchemaObject describes a non-standard primitive.
  *
@@ -134,6 +140,9 @@ const PRIMITIVES = ['integer', 'number', 'string', 'boolean', 'null']
  *          from "any instance" to stricter criteria, false otherwise.
  */
 const isNarrowedPrimitive = (schema: SchemaObject) => {
+  if (equal(schema, SAFE_MIN_MAX_INTEGER)) {
+    return false
+  }
   if (!Array.isArray(schema.type) && PRIMITIVES.includes(schema.type)) {
     return !equal(schema, { type: schema.type })
   }
