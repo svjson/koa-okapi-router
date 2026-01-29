@@ -1,7 +1,13 @@
 import { OperationObject, SchemaObject } from 'openapi3-ts/oas31'
 import { describe, expect, it } from 'vitest'
 import { linkSchema, CmpTuple, linkComponentReferences } from '@src/openapi'
-import { makeComponentRef, makeOpenApiObject } from './openapi-fixtures'
+import {
+  makeComponentRef,
+  makeOpenApiObject,
+  makePathParameter,
+  makeRequestBody,
+  makeResponseObject,
+} from './openapi-fixtures'
 
 const userSchema: SchemaObject = {
   type: 'object',
@@ -12,6 +18,62 @@ const userSchema: SchemaObject = {
     },
   },
   required: ['roleId'],
+}
+
+const genreSchema: SchemaObject = {
+  enum: ['crime', 'mystery', 'sci-fi', 'fantasy', 'self-help', 'blatant propaganda'],
+  type: 'string',
+}
+
+const authorSchema: SchemaObject = {
+  additionalProperties: false,
+  properties: {
+    genres: {
+      items: genreSchema,
+      type: 'array',
+    },
+    id: {
+      maximum: 9007199254740991,
+      minimum: -9007199254740991,
+      type: 'integer',
+    },
+    name: {
+      type: 'string',
+    },
+    type: {
+      const: 'author',
+      type: 'string',
+    },
+  },
+  required: ['id', 'name', 'type', 'genres'],
+  type: 'object',
+}
+
+const publisherSchema: SchemaObject = {
+  additionalProperties: false,
+  properties: {
+    id: {
+      maximum: 9007199254740991,
+      minimum: -9007199254740991,
+      type: 'integer',
+    },
+    name: {
+      type: 'string',
+    },
+    region: {
+      type: 'string',
+    },
+    type: {
+      const: 'publisher',
+      type: 'string',
+    },
+  },
+  required: ['id', 'name', 'type', 'region'],
+  type: 'object',
+}
+
+const actorSchema: SchemaObject = {
+  anyOf: [authorSchema, publisherSchema],
 }
 
 describe('linkSchema', () => {
@@ -290,20 +352,13 @@ describe('linkComponentReferences', () => {
       paths: {
         '/endpoint': {
           post: {
-            requestBody: {
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      _links: makeComponentRef('Links'),
-                      content: makeComponentRef('DataObject'),
-                    },
-                  },
-                },
+            requestBody: makeRequestBody({
+              type: 'object',
+              properties: {
+                _links: makeComponentRef('Links'),
+                content: makeComponentRef('DataObject'),
               },
-            },
-
+            }),
             responses: {
               ...openApiObject.paths['/endpoint'].post.responses,
             },
@@ -311,5 +366,88 @@ describe('linkComponentReferences', () => {
         },
       },
     })
+  })
+
+  it('should replace response schema with reference to `anyOf` object', () => {
+    const openApiObject = makeOpenApiObject({
+      paths: {
+        '/actors/{id}': {
+          get: {
+            parameters: [makePathParameter('id', 'integer')],
+            responses: {
+              200: makeResponseObject(actorSchema),
+            },
+          },
+        },
+      },
+      components: {
+        schemas: {
+          Actor: actorSchema,
+        },
+      },
+    })
+
+    // When
+    const result = linkComponentReferences(openApiObject)
+
+    // Then
+    expect(result).toEqual(
+      makeOpenApiObject({
+        paths: {
+          '/actors/{id}': {
+            get: {
+              parameters: [makePathParameter('id', 'integer')],
+              responses: {
+                200: makeResponseObject(makeComponentRef('Actor')),
+              },
+            },
+          },
+        },
+        components: openApiObject.components,
+      })
+    )
+  })
+
+  it('should replace anyOf option schemas with component references', () => {
+    const openApiObject = makeOpenApiObject({
+      paths: {
+        '/actors/{id}': {
+          get: {
+            parameters: [makePathParameter('id', 'integer')],
+            responses: {
+              200: makeResponseObject(actorSchema),
+            },
+          },
+        },
+      },
+      components: {
+        schemas: {
+          Author: authorSchema,
+          Publisher: publisherSchema,
+        },
+      },
+    })
+
+    // When
+    const result = linkComponentReferences(openApiObject)
+
+    // Then
+    expect(result).toEqual(
+      makeOpenApiObject({
+        paths: {
+          '/actors/{id}': {
+            get: {
+              parameters: [makePathParameter('id', 'integer')],
+              responses: {
+                200: makeResponseObject({
+                  anyOf: [makeComponentRef('Author'), makeComponentRef('Publisher')],
+                }),
+              },
+            },
+          },
+        },
+        components: openApiObject.components,
+      })
+    )
   })
 })

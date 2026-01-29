@@ -173,7 +173,7 @@ const getAppJsonMediaTypeObject = (
  * @returns A ReferenceObject if a matching component is found, or
  */
 export const createComponentLink = (schema: SchemaObject, components: CmpTuple[]) => {
-  switch (schema?.type) {
+  switch (schema.type) {
     case 'array':
     case 'object':
       const candidates = components.filter(([_, cmp]) => equal(schema, cmp))
@@ -183,6 +183,11 @@ export const createComponentLink = (schema: SchemaObject, components: CmpTuple[]
       break
     default:
       if (isNarrowedPrimitive(schema)) {
+        const candidates = components.filter(([_, cmp]) => equal(schema, cmp))
+        if (candidates.length === 1) {
+          return { $ref: `#/components/schemas/${candidates[0][0]}` }
+        }
+      } else if (schema.anyOf) {
         const candidates = components.filter(([_, cmp]) => equal(schema, cmp))
         if (candidates.length === 1) {
           return { $ref: `#/components/schemas/${candidates[0][0]}` }
@@ -224,6 +229,13 @@ export const linkSchema = (
           result[key] = linkSchema(prop, components)
           return result
         }, {}),
+      }
+    case undefined:
+      if (schema.anyOf) {
+        return {
+          ...schema,
+          anyOf: schema.anyOf.map((o) => linkSchema(o, components)),
+        }
       }
   }
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import KoaRouter from '@koa/router'
 
 import { makeOkapiRouter } from '@src/index'
+import { ActorSchema } from './zod-schema-fixtures'
 
 describe('OkapiRouter', () => {
   const UserSchema = z.object({
@@ -98,6 +99,114 @@ describe('OkapiRouter', () => {
           },
         },
       })
+    })
+  })
+
+  it('should generate schema containing a discriminated union type', () => {
+    const router = makeOkapiRouter(new KoaRouter(), {})
+
+    router.get(
+      '/user/:id',
+      {
+        response: {
+          200: {
+            description: 'Get an Actor entity by ID',
+            schema: ActorSchema,
+          },
+        },
+      },
+      (ctx) => {
+        ctx.body = {
+          id: 2,
+          type: 'author',
+          name: 'Benny Boxare',
+          genres: ['self-help', 'crime'],
+        }
+      }
+    )
+
+    const openApiJson = router.openapiJson()
+
+    expect(openApiJson).toEqual({
+      info: {
+        title: 'Koa Application',
+        version: '1.0.0',
+      },
+      openapi: '3.1.0',
+      paths: {
+        '/user/{id}': {
+          get: {
+            responses: {
+              200: {
+                content: {
+                  'application/json': {
+                    schema: {
+                      anyOf: [
+                        {
+                          additionalProperties: false,
+                          properties: {
+                            genres: {
+                              items: {
+                                enum: [
+                                  'crime',
+                                  'mystery',
+                                  'sci-fi',
+                                  'fantasy',
+                                  'self-help',
+                                  'blatant propaganda',
+                                ],
+                                type: 'string',
+                              },
+                              type: 'array',
+                            },
+                            id: {
+                              maximum: 9007199254740991,
+                              minimum: -9007199254740991,
+                              type: 'integer',
+                            },
+                            name: {
+                              type: 'string',
+                            },
+                            type: {
+                              const: 'author',
+                              type: 'string',
+                            },
+                          },
+                          required: ['id', 'name', 'type', 'genres'],
+                          type: 'object',
+                        },
+                        {
+                          additionalProperties: false,
+                          properties: {
+                            id: {
+                              maximum: 9007199254740991,
+                              minimum: -9007199254740991,
+                              type: 'integer',
+                            },
+                            name: {
+                              type: 'string',
+                            },
+                            region: {
+                              type: 'string',
+                            },
+                            type: {
+                              const: 'publisher',
+                              type: 'string',
+                            },
+                          },
+                          required: ['id', 'name', 'type', 'region'],
+                          type: 'object',
+                        },
+                      ],
+                    },
+                  },
+                },
+                description: 'Get an Actor entity by ID',
+              },
+            },
+          },
+        },
+      },
     })
   })
 })
