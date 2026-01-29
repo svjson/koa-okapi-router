@@ -1,6 +1,6 @@
 import { OperationObject, SchemaObject } from 'openapi3-ts/oas31'
 import { describe, expect, it } from 'vitest'
-import { createComponentLink, CmpTuple, linkComponentReferences } from '@src/openapi'
+import { linkSchema, CmpTuple, linkComponentReferences } from '@src/openapi'
 import { makeComponentRef, makeOpenApiObject } from './openapi-fixtures'
 
 const userSchema: SchemaObject = {
@@ -14,7 +14,7 @@ const userSchema: SchemaObject = {
   required: ['roleId'],
 }
 
-describe('crateComponentLink', () => {
+describe('linkSchema', () => {
   it('should replace array item with ref to registered component', () => {
     // Given
     const schemas = [['UserRole', userSchema]] satisfies CmpTuple[]
@@ -25,7 +25,7 @@ describe('crateComponentLink', () => {
     } satisfies SchemaObject
 
     // When
-    const result = createComponentLink(object, schemas)
+    const result = linkSchema(object, schemas)
 
     // Then
     expect(result).toEqual({
@@ -228,6 +228,84 @@ describe('linkComponentReferences', () => {
                   },
                 },
               },
+            },
+          },
+        },
+      },
+    })
+  })
+
+  it('should replace nested requestBody property with component reference', () => {
+    // Given
+    const openApiObject = makeOpenApiObject({
+      paths: {
+        '/endpoint': {
+          post: {
+            requestBody: {
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      _links: makeComponentRef('Links'),
+                      content: dataSchema,
+                    },
+                  },
+                },
+              },
+            },
+            responses: {
+              201: {
+                content: {
+                  'application/json': {
+                    schema: makeComponentRef('CreatedResponse'),
+                  },
+                },
+              },
+              403: {
+                content: {
+                  'application/json': {
+                    schema: makeComponentRef('ForbiddenResponse'),
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      components: {
+        schemas: {
+          DataObject: dataSchema,
+          User: userSchema,
+        },
+      },
+    })
+
+    // When
+    const result = linkComponentReferences(openApiObject)
+
+    // Then
+    expect(result).toEqual({
+      ...openApiObject,
+      paths: {
+        '/endpoint': {
+          post: {
+            requestBody: {
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      _links: makeComponentRef('Links'),
+                      content: makeComponentRef('DataObject'),
+                    },
+                  },
+                },
+              },
+            },
+
+            responses: {
+              ...openApiObject.paths['/endpoint'].post.responses,
             },
           },
         },

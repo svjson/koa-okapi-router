@@ -23,6 +23,7 @@ import type {
   SchemaObject,
 } from 'openapi3-ts/oas31'
 import equal from 'fast-deep-equal'
+
 /**
  * Translate a uri path pattern as expressed for KoaRouter to the
  * format expected by openapi.json.
@@ -174,12 +175,6 @@ const getAppJsonMediaTypeObject = (
 export const createComponentLink = (schema: SchemaObject, components: CmpTuple[]) => {
   switch (schema?.type) {
     case 'array':
-      if ('$ref' in schema.items) return
-      const itemRef = createComponentLink(schema.items, components)
-      if (itemRef) {
-        return { ...schema, items: itemRef }
-      }
-      break
     case 'object':
       const candidates = components.filter(([_, cmp]) => equal(schema, cmp))
       if (candidates.length === 1) {
@@ -197,6 +192,45 @@ export const createComponentLink = (schema: SchemaObject, components: CmpTuple[]
 }
 
 /**
+ * Walks a SchemaObject and returns a modified version, containing $ref
+ * links to components where detected.
+ *
+ * Returns the unmodififed schema if no links are resolved, or the provided
+ * schema is a ReferenceObject itself.
+ *
+ * @param schema - The SchemaObject to process.
+ *
+ * @param components - The available components as tuples of [name, schema].
+ */
+export const linkSchema = (
+  schema: SchemaObject | ReferenceObject,
+  components: CmpTuple[]
+) => {
+  if ('$ref' in schema) return schema
+
+  const link = createComponentLink(schema, components)
+  if (link) return link
+
+  switch (schema.type) {
+    case 'array':
+      return {
+        ...schema,
+        items: linkSchema(schema.items, components),
+      }
+    case 'object':
+      return {
+        ...schema,
+        properties: Object.entries(schema.properties).reduce((result, [key, prop]) => {
+          result[key] = linkSchema(prop, components)
+          return result
+        }, {}),
+      }
+  }
+
+  return schema
+}
+
+/**
  * Replace concrete media type schema with component reference if applicable.
  *
  * This operation mutates the input `obj` and is meant to be applied cloned data
@@ -211,12 +245,7 @@ const linkMediaTypeReference = (
 ) => {
   const appJson = getAppJsonMediaTypeObject(obj)
   if (appJson) {
-    if (!('$ref' in appJson.schema)) {
-      const inferred = createComponentLink(appJson.schema, components)
-      if (inferred) {
-        appJson.schema = inferred
-      }
-    }
+    appJson.schema = linkSchema(appJson.schema, components)
   }
 }
 
