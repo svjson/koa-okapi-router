@@ -2,7 +2,7 @@ import z from 'zod/v4'
 import { describe, expect, it } from 'vitest'
 import KoaRouter from '@koa/router'
 
-import { makeOkapiRouter, OkapiRouter } from '@src/index'
+import { makeOkapiRouter } from '@src/index'
 
 describe('OkapiRouter', () => {
   const UserSchema = z.object({

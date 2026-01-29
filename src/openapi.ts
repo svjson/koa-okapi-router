@@ -2,6 +2,7 @@ import { STATUS_CODES } from 'node:http'
 import {
   DescribedSchema,
   EntitySchema,
+  HTTP_METHODS,
   OkapiRouterOptions,
   PathParameterMap,
   RouteSchema,
@@ -11,14 +12,17 @@ import { makeZodAdapter } from './zod-adapter'
 import type { AnyZodSchema, ZodAdapter } from './zod-adapter'
 
 import type {
+  MediaTypeObject,
   OpenAPIObject,
   ParameterLocation,
   ParameterObject,
   PathItemObject,
   ReferenceObject,
+  RequestBodyObject,
+  ResponseObject,
   SchemaObject,
 } from 'openapi3-ts/oas31'
-
+import equal from 'fast-deep-equal'
 /**
  * Translate a uri path pattern as expressed for KoaRouter to the
  * format expected by openapi.json.
@@ -108,6 +112,151 @@ const normalizeSchema = (desc?: DescribedSchema, defaultDescription?: string) =>
     ...(defaultDescription ? { description: defaultDescription } : {}),
     schema: desc as AnyZodSchema,
   }
+}
+
+/**
+ * Tuple format of `components.schemas` entries
+ */
+export type CmpTuple = [string, SchemaObject | ReferenceObject]
+
+/**
+ * JSON Schema primitives
+ */
+const PRIMITIVES = ['integer', 'number', 'string', 'boolean', 'null']
+
+/**
+ * Test if a SchemaObject describes a non-standard primitive.
+ *
+ * @param schema - The SchemaObject to test.
+ *
+ * @returns True if the schema describes a primitive that has been narrowed
+ *          from "any instance" to stricter criteria, false otherwise.
+ */
+const isNarrowedPrimitive = (schema: SchemaObject) => {
+  if (!Array.isArray(schema.type) && PRIMITIVES.includes(schema.type)) {
+    return !equal(schema, { type: schema.type })
+  }
+
+  return false
+}
+
+/**
+ * Extract the 'application/json' MediaTypeObject from a ResponseObject
+ * or RequestBodyObject, if present and not a $ref.
+ *
+ * @param obj - The ResponseObject or RequestBodyObject to extract from.
+ *
+ * @returns The MediaTypeObject for 'application/json', or undefined
+ *          if not found.
+ */
+const getAppJsonMediaTypeObject = (
+  obj?: ResponseObject | RequestBodyObject | ReferenceObject
+): MediaTypeObject | undefined => {
+  if (
+    obj &&
+    !('$ref' in obj) &&
+    obj.content &&
+    'application/json' in obj.content &&
+    !('$ref' in obj.content['application/json'].schema)
+  ) {
+    return obj.content['application/json']
+  }
+}
+
+/**
+ * Creates a component reference for a given schema from available components.
+ *
+ * @param schema - The SchemaObject to create a $ref-replacement for.
+ * @param components - The available components as tuples of [name, schema].
+ *
+ * @returns A ReferenceObject if a matching component is found, or
+ */
+export const createComponentLink = (schema: SchemaObject, components: CmpTuple[]) => {
+  switch (schema?.type) {
+    case 'array':
+      if ('$ref' in schema.items) return
+      const itemRef = createComponentLink(schema.items, components)
+      if (itemRef) {
+        return { ...schema, items: itemRef }
+      }
+      break
+    case 'object':
+      const candidates = components.filter(([_, cmp]) => equal(schema, cmp))
+      if (candidates.length === 1) {
+        return { $ref: `#/components/schemas/${candidates[0][0]}` }
+      }
+      break
+    default:
+      if (isNarrowedPrimitive(schema)) {
+        const candidates = components.filter(([_, cmp]) => equal(schema, cmp))
+        if (candidates.length === 1) {
+          return { $ref: `#/components/schemas/${candidates[0][0]}` }
+        }
+      }
+  }
+}
+
+/**
+ * Replace concrete media type schema with component reference if applicable.
+ *
+ * This operation mutates the input `obj` and is meant to be applied cloned data
+ * that is safe to modify.
+ *
+ * @param obj - The ResponseObject or RequestBodyObject to process.
+ * @param components - The available components as tuples of [name, schema].
+ */
+const linkMediaTypeReference = (
+  obj: ResponseObject | RequestBodyObject | ReferenceObject | undefined,
+  components: CmpTuple[]
+) => {
+  const appJson = getAppJsonMediaTypeObject(obj)
+  if (appJson) {
+    if (!('$ref' in appJson.schema)) {
+      const inferred = createComponentLink(appJson.schema, components)
+      if (inferred) {
+        appJson.schema = inferred
+      }
+    }
+  }
+}
+
+/**
+ * Scan the `paths` section of an OpenAPIObject and replace content
+ * SchemaObjects with references to component schemas where applicable.
+ *
+ * The be considered applicable, a conten schema must:
+ * - not be a reference itself
+ * - not be a primitive type without restrictions/specializations.
+ *
+ * This operation does not mutate the input openapiJson, but returns
+ * a version of it with inline schemas replace with $ref objects where
+ * applicable.
+ *
+ * @param openapiJson - The OpenAPIObject to process.
+ *
+ * @returns A new OpenAPIObject with component references.
+ */
+export const linkComponentReferences = (openapiJson: OpenAPIObject) => {
+  const schema = structuredClone(openapiJson)
+
+  const components = Object.entries(schema.components?.schemas ?? {})
+
+  Object.entries(schema.paths ?? {}).forEach(([_, pathItem]) => {
+    HTTP_METHODS.forEach((method) => {
+      const pathSchema = pathItem[method]
+      if (pathSchema) {
+        linkMediaTypeReference(pathSchema.requestBody, components)
+
+        if (pathSchema.responses) {
+          Object.values(pathSchema.responses).forEach((responseSchema) => {
+            linkMediaTypeReference(responseSchema, components)
+          })
+        }
+      }
+    })
+  })
+
+  return schema
 }
 
 /**
@@ -207,7 +356,7 @@ export const buildOpenApiJson = (
     componentSchemas[key] = zod.toJsonSchema(entities[key])
   }
 
-  return {
+  const openApiObject: OpenAPIObject = {
     openapi: '3.1.0',
     info: opts.openapi.info,
     paths,
@@ -215,6 +364,8 @@ export const buildOpenApiJson = (
       ? { components: { schemas: componentSchemas } }
       : {}),
   }
+
+  return linkComponentReferences(openApiObject)
 }
 
 /**
