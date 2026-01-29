@@ -1,7 +1,9 @@
 
 # Changelog
 
-## [UNRELEASED]
+## [0.1.4] - 2025-01-30
+
+Component Schema support and extending existing openapi.json with OkapiRouter-generated openapi.json
 
 ### Added
 - Feature: Allow registering component schemas/entities for OpenAPI schemas with `addEntity`/`addEntities`.
