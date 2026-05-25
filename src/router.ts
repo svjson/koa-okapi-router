@@ -1,4 +1,5 @@
 import KoaRouter from '@koa/router'
+import Koa from 'koa'
 
 import { HTTP_METHODS } from './types'
 import { mergeDefaults } from './options'
@@ -86,12 +87,14 @@ export const makeOkapiRouter = (
    *
    * All method-specific methods work as syntactic sugar over this
    * one function for registering routes.
+   *
+   * Accepts an optional pre-handler middleware before the typed route handler.
    */
   const register = <Schema extends RouteSchema>(
     { path, method, schema }: OkapiRegisterParams<Schema>,
-    middleware: any
+    ...middlewares: [...Koa.Middleware[], TypedMiddleware<Schema>]
   ) => {
-    koaRouter.register(path, [method], middleware)
+    koaRouter.register(path, [method], middlewares as any[])
     if (schema) {
       schemas[`${method} ${path}`] = schema
     }
@@ -107,16 +110,9 @@ export const makeOkapiRouter = (
       _router[method] = <Schema extends RouteSchema>(
         urlPattern: string,
         schema: Schema,
-        middleware: TypedMiddleware<Schema>
+        ...middlewares: [...Koa.Middleware[], TypedMiddleware<Schema>]
       ) => {
-        register(
-          {
-            method,
-            path: urlPattern,
-            schema,
-          },
-          middleware
-        )
+        register({ method, path: urlPattern, schema }, ...middlewares)
       }
       return _router
     },

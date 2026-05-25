@@ -6,5 +6,7 @@ export type {
   OkapiRouter,
   OkapiRouterOptions,
   OkapiRegisterParams,
+  OkapiRouteMethod,
+  OkapiRegisterMethod,
   TypedMiddleware,
 } from './types'

@@ -151,4 +151,62 @@ describe('OkapiRouter', () => {
       expect(body).toEqual({ howdy: 'cowboy and cowgirl' })
     })
   })
+
+  describe('Pre-handler middlewares', () => {
+    it('should execute a pre-middleware before the route handler', async () => {
+      // Given
+      const fixture = koaFixture(z)
+      const { okapiRouter } = fixture
+      const callOrder: string[] = []
+
+      // When
+      okapiRouter.get(
+        '/api/hello',
+        {},
+        async (_ctx, next) => {
+          callOrder.push('pre')
+          await next()
+        },
+        async (ctx) => {
+          callOrder.push('handler')
+          ctx.status = 200
+          ctx.body = { hello: 'world' }
+        }
+      )
+      fixture.start()
+
+      // Then
+      const response = await fixture.client().get('/api/hello')
+      expect(response.status).toBe(200)
+      expect(await response.json()).toEqual({ hello: 'world' })
+      expect(callOrder).toEqual(['pre', 'handler'])
+    })
+
+    it('should support pre-middlewares via the register() method', async () => {
+      // Given
+      const fixture = koaFixture(z)
+      const { okapiRouter } = fixture
+      const callOrder: string[] = []
+
+      // When
+      okapiRouter.register(
+        { method: 'get', path: '/api/hello', schema: {} },
+        async (_ctx, next) => {
+          callOrder.push('pre')
+          await next()
+        },
+        async (ctx) => {
+          callOrder.push('handler')
+          ctx.status = 200
+          ctx.body = {}
+        }
+      )
+      fixture.start()
+
+      // Then
+      await fixture.client().get('/api/hello')
+      expect(callOrder).toEqual(['pre', 'handler'])
+    })
+
+  })
 })
