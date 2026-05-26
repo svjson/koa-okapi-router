@@ -77,7 +77,11 @@ export interface OkapiRouterOptions {
  * @template S - The RouteSchema defining the types for the route handler.
  */
 export type OkapiRouteMethod = {
-  <S extends RouteSchema>(path: string | RegExp, schema: S, handler: TypedMiddleware<S>): void
+  <S extends RouteSchema>(
+    path: string | RegExp,
+    schema: S,
+    handler: TypedMiddleware<S>
+  ): void
   <S extends RouteSchema>(
     path: string | RegExp,
     schema: S,

@@ -207,6 +207,5 @@ describe('OkapiRouter', () => {
       await fixture.client().get('/api/hello')
       expect(callOrder).toEqual(['pre', 'handler'])
     })
-
   })
 })

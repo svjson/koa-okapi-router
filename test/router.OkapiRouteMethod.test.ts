@@ -17,7 +17,9 @@ describe('OkapiRouteMethod overloads', () => {
 
   it('should accept one pre-middleware followed by a typed handler', () => {
     const router = makeOkapiRouter(new KoaRouter())
-    const pre: Koa.Middleware = async (_ctx, next) => { await next() }
+    const pre: Koa.Middleware = async (_ctx, next) => {
+      await next()
+    }
 
     router.get('/test', {}, pre, async (_ctx) => {})
   })
@@ -28,7 +30,9 @@ describe('OkapiRouteMethod overloads', () => {
       query: { name: z.string() },
       response: { 200: z.object({ greeting: z.string() }) },
     }
-    const pre: Koa.Middleware = async (_ctx, next) => { await next() }
+    const pre: Koa.Middleware = async (_ctx, next) => {
+      await next()
+    }
 
     router.get('/test', schema, pre, (ctx) => {
       // ctx.query.name should be typed as string
@@ -40,7 +44,9 @@ describe('OkapiRouteMethod overloads', () => {
 
   it('should support all HTTP methods with pre-middlewares', () => {
     const router = makeOkapiRouter(new KoaRouter())
-    const pre: Koa.Middleware = async (_ctx, next) => { await next() }
+    const pre: Koa.Middleware = async (_ctx, next) => {
+      await next()
+    }
 
     router.get('/test', {}, pre, async (_ctx) => {})
     router.post('/test', {}, pre, async (_ctx) => {})
