@@ -67,17 +67,50 @@ export interface OkapiRouterOptions {
 }
 
 /**
- * OkapiRouter type extending KoaRouter with typed methods for each HTTP method
- * and route registration.
+ * Route registration method supporting an optional chain of pre-handler
+ * middlewares followed by a typed route handler.
+ *
+ * Supports an optional single pre-middleware before the typed handler.
+ * For longer chains, compose middlewares manually using `koa-compose` before
+ * passing them.
+ *
+ * @template S - The RouteSchema defining the types for the route handler.
  */
-export type OkapiRouter = Record<
-  HttpMethod,
+export type OkapiRouteMethod = {
   <S extends RouteSchema>(
     path: string | RegExp,
     schema: S,
-    middleware: TypedMiddleware<S>
-  ) => void
-> & {
+    handler: TypedMiddleware<S>
+  ): void
+  <S extends RouteSchema>(
+    path: string | RegExp,
+    schema: S,
+    pre: Koa.Middleware,
+    handler: TypedMiddleware<S>
+  ): void
+}
+
+/**
+ * Low-level route registration method used by `OkapiRouter.register`.
+ *
+ * Supports the same pre-middleware overloads as `OkapiRouteMethod`,
+ * but takes an `OkapiRegisterParams` object instead of path and schema
+ * as separate arguments.
+ */
+export type OkapiRegisterMethod = {
+  (params: OkapiRegisterParams<RouteSchema>, handler: TypedMiddleware<RouteSchema>): void
+  (
+    params: OkapiRegisterParams<RouteSchema>,
+    pre: Koa.Middleware,
+    handler: TypedMiddleware<RouteSchema>
+  ): void
+}
+
+/**
+ * OkapiRouter type extending KoaRouter with typed methods for each HTTP method
+ * and route registration.
+ */
+export type OkapiRouter = Record<HttpMethod, OkapiRouteMethod> & {
   /**
    * Add an entity definition for the purpose of OpenAPI schema generation.
    *
@@ -114,15 +147,13 @@ export type OkapiRouter = Record<
   allowedMethods: () => ReturnType<KoaRouter['allowedMethods']>
 
   /**
-   * Registers a route with the given parameters and middleware.
+   * Registers a route with the given parameters and an optional chain of
+   * pre-handler middlewares followed by a typed route handler.
    *
    * @param params - Parameters for the route including path, method, and
    *                 optional schema.
    */
-  register: (
-    params: OkapiRegisterParams<RouteSchema>,
-    middleware: TypedMiddleware<RouteSchema>
-  ) => void
+  register: OkapiRegisterMethod
 
   /**
    * Generates an OpenAPI JSON document for the registered routes.
